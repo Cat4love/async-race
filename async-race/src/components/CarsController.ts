@@ -6,4 +6,8 @@ export class CarsController {
   constructor(model: CarsModel) {
     this.model = model;
   }
+
+  public async handleGetCars() {
+    return this.model.getCars();
+  }
 }

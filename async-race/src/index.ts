@@ -2,11 +2,11 @@ import { CarsView } from "./components/CarsView";
 import { CarsController } from "./components/CarsController";
 import { CarsModel } from "./components/CarsModel";
 
-const usersModel = new CarsModel();
-const usersController = new CarsController(usersModel);
-const usersView = new CarsView(
+const carsModel = new CarsModel();
+const carsController = new CarsController(carsModel);
+const carsView = new CarsView(
   document.querySelector("body") as HTMLElement,
-  usersController
+  carsController
 );
 
-console.log(usersView);
+carsView.mount();
