@@ -16,9 +16,17 @@ export class CarsView {
 
   private createCar!: HTMLButtonElement;
 
+  private updateName!: HTMLInputElement;
+
+  private updateColor!: HTMLInputElement;
+
+  private updateCar!: HTMLButtonElement;
+
   private garage!: HTMLDivElement;
 
   private selectCar!: HTMLButtonElement;
+
+  private selectCardId!: string | null;
 
   private removeCar!: HTMLButtonElement;
 
@@ -31,7 +39,57 @@ export class CarsView {
   constructor(root: HTMLElement, controller: CarsController) {
     this.root = root;
     this.controller = controller;
+    this.createForm();
   }
+
+  private createCarClick = async () => {
+    if (
+      this.inputName instanceof HTMLInputElement &&
+      this.inputColor instanceof HTMLInputElement
+    ) {
+      await this.controller.handleCreateCar(
+        this.inputName.value,
+        this.inputColor.value
+      );
+      await this.updateGarage();
+    }
+  };
+
+  private updateCarClick = async () => {
+    if (
+      this.updateName instanceof HTMLInputElement &&
+      this.updateColor instanceof HTMLInputElement &&
+      this.selectCardId !== null
+    ) {
+      await this.controller.handleUpdateCar(
+        this.updateName.value,
+        this.updateColor.value,
+        this.selectCardId
+      );
+      await this.updateGarage();
+    }
+  };
+
+  private selectCarClick = (event: Event) => {
+    const target = event.target as HTMLButtonElement;
+    this.selectCardId = target.getAttribute("data-id");
+    const color = target.getAttribute("data-color");
+    const name = target.getAttribute("data-name");
+    if (color !== null && name !== null) {
+      this.updateName.value = name;
+      this.updateColor.value = color;
+    }
+  };
+
+  private removeCarClick = async (event: Event) => {
+    const target = event.target as HTMLButtonElement;
+    const id = target.getAttribute("data-id");
+    if (id !== null) {
+      await this.controller.handleRemoveCar(id);
+    }
+    this.selectCardId = target.getAttribute("data-id");
+    await this.updateGarage();
+  };
 
   private createForm() {
     this.form = document.createElement("form");
@@ -52,22 +110,24 @@ export class CarsView {
     this.createCar.className = "fieldset__button";
     this.createCar.innerText = "CREATE";
     this.createCar.type = "button";
+    this.createCar.addEventListener("click", this.createCarClick);
 
     const fieldsetUpdate = document.createElement("fieldset");
     fieldsetUpdate.className = "form__fieldset fieldset";
 
-    const updateName = document.createElement("input");
-    updateName.className = "fieldset__input_text";
-    updateName.type = "text";
+    this.updateName = document.createElement("input");
+    this.updateName.className = "fieldset__input_text";
+    this.updateName.type = "text";
 
-    const updateColor = document.createElement("input");
-    updateColor.className = "fieldset__input_color";
-    updateColor.type = "color";
+    this.updateColor = document.createElement("input");
+    this.updateColor.className = "fieldset__input_color";
+    this.updateColor.type = "color";
 
-    const updateCar = document.createElement("button");
-    updateCar.className = "fieldset__button";
-    updateCar.innerHTML = "UPDATE";
-    updateCar.type = "button";
+    this.updateCar = document.createElement("button");
+    this.updateCar.className = "fieldset__button";
+    this.updateCar.innerHTML = "UPDATE";
+    this.updateCar.type = "button";
+    this.updateCar.addEventListener("click", this.updateCarClick);
 
     const race = document.createElement("button");
     race.className = "form__button";
@@ -85,7 +145,7 @@ export class CarsView {
     generateCars.innerHTML = "GENERATE";
 
     fieldsetCreate.append(this.inputName, this.inputColor, this.createCar);
-    fieldsetUpdate.append(updateName, updateColor, updateCar);
+    fieldsetUpdate.append(this.updateName, this.updateColor, this.updateCar);
     this.form.appendChild(fieldsetCreate);
     this.form.append(fieldsetCreate, fieldsetUpdate, race, reset, generateCars);
   }
@@ -113,10 +173,16 @@ export class CarsView {
       this.selectCar = document.createElement("button");
       this.selectCar.className = "box__select";
       this.selectCar.innerHTML = "SELECT";
+      this.selectCar.setAttribute("data-id", car.id);
+      this.selectCar.setAttribute("data-color", car.color);
+      this.selectCar.setAttribute("data-name", car.name);
+      this.selectCar.addEventListener("click", this.selectCarClick);
 
       this.removeCar = document.createElement("button");
       this.removeCar.className = "box__remove";
       this.removeCar.innerHTML = "REMOVE";
+      this.removeCar.setAttribute("data-id", car.id);
+      this.removeCar.addEventListener("click", this.removeCarClick);
 
       this.startEngine = document.createElement("button");
       this.startEngine.className = "box__start";
@@ -149,12 +215,17 @@ export class CarsView {
     }
   }
 
+  public async updateGarage() {
+    this.main.removeChild(this.garage);
+    await this.createGarage();
+    this.main.appendChild(this.garage);
+  }
+
   public async mount() {
     this.createForm();
     await this.createGarage();
     this.main = document.createElement("main");
     this.main.appendChild(this.form);
-    console.log(this.garage);
     this.main.appendChild(this.garage);
     this.root.appendChild(this.main);
   }
