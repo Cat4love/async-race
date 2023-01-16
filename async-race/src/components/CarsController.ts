@@ -37,7 +37,6 @@ export class CarsController {
     if (!carsId.includes(String(id))) {
       throw Error("Такой машины нет");
     }
-
     return this.model.updateCar(name, color, id);
   }
 
@@ -48,5 +47,23 @@ export class CarsController {
       throw Error("Такой машины нет");
     }
     return this.model.removeCar(id);
+  }
+
+  public async handleSwitchEngine(id: string, state: string) {
+    const cars = await this.model.getCars();
+    const carsId = cars.map((x) => String(x.id));
+    if (!carsId.includes(String(id))) {
+      throw Error("Такой машины нет");
+    }
+    return this.model.switchEngine(id, state);
+  }
+
+  public async handleDriveEngine(id: string) {
+    const cars = await this.model.getCars();
+    const carsId = cars.map((x) => String(x.id));
+    if (!carsId.includes(String(id))) {
+      throw Error("Такой машины нет");
+    }
+    return this.model.driveEngine(id);
   }
 }

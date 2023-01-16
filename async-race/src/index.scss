@@ -1,12 +1,31 @@
-.box__road {
-	width: 100vw;
-	height: 2px;
-	border-top: 2px solid black;
+.box {
+  &__road {
+    width: 100vw;
+    height: 2px;
+    border-top: 2px solid black;
+  }
+  &__car {
+    width: 70px;
+    height: 70px;
+    padding: 0px;
+    margin-bottom: -18px;
+  }
+
+  &__start {
+    background: green;
+  }
 }
 
-.box__car{
-	width: 100px;
-	height: 100px;
-	padding: 0px;
-	margin-bottom: -22px;
+.backgroud-default {
+  background: none;
+}
+
+@keyframes slidein {
+  from {
+    transform: translateX(0%);
+  }
+
+  to {
+    transform: translateX(90vw);
+  }
 }

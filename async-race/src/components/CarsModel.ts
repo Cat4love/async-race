@@ -4,6 +4,15 @@ interface ICar {
   id: string;
 }
 
+interface IEngine {
+  velocity: string;
+  distance: string;
+}
+
+interface IDriveEngine {
+  success: boolean;
+}
+
 export class CarsModel {
   constructor() {
     this.getCars();
@@ -70,5 +79,42 @@ export class CarsModel {
     const data: Array<ICar> = await response.json();
     console.log(`Машина удалена ${JSON.stringify(data)}`);
     return data;
+  }
+
+  async switchEngine(id: string, state: string) {
+    const response = await fetch(
+      `http://localhost:3000/engine?id=${id}&status=${state}`,
+      {
+        method: "PATCH",
+      }
+    );
+    if (!response.ok) {
+      const message = `An error has occured: ${response.status}`;
+      throw new Error(message);
+    }
+    const data: IEngine = await response.json();
+    return data;
+  }
+
+  async driveEngine(id: string) {
+    const response = await fetch(
+      `http://localhost:3000/engine?id=${id}&status=drive`,
+      {
+        method: "PATCH",
+      }
+    );
+    if (!response.ok) {
+      if (response.status === 500) {
+        const data: IDriveEngine = {
+          success: false,
+        };
+        return data;
+      }
+      const message = `An error has occured: ${response.status}`;
+      throw new Error(message);
+    } else {
+      const data: IDriveEngine = await response.json();
+      return data;
+    }
   }
 }
