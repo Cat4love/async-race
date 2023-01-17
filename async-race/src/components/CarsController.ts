@@ -11,6 +11,10 @@ export class CarsController {
     return this.model.getCars();
   }
 
+  public async handleGetCarsOnPage(page: number) {
+    return this.model.getCarsOnPage(page);
+  }
+
   public async handleCreateCar(name: string, color: string) {
     if (!name || !color) {
       throw Error("Укажите name и color");

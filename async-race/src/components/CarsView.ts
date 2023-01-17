@@ -36,10 +36,18 @@ export class CarsView {
 
   private car!: HTMLElement;
 
+  private pagination!: HTMLDivElement;
+
+  private prev!: HTMLButtonElement;
+
+  private next!: HTMLButtonElement;
+
+  private pageCount = 1;
+
   constructor(root: HTMLElement, controller: CarsController) {
     this.root = root;
     this.controller = controller;
-    this.createForm();
+    // this.createForm();
   }
 
   private createCarClick = async () => {
@@ -145,6 +153,21 @@ export class CarsView {
     }
   };
 
+  private prevClick = () => {
+    if (this.pageCount > 1) {
+      this.pageCount -= 1;
+    }
+    this.updateGarage();
+  };
+
+  private nextClick = async () => {
+    const cars = await this.controller.handleGetCarsOnPage(this.pageCount + 1);
+    if (cars.length > 0) {
+      this.pageCount += 1;
+    }
+    this.updateGarage();
+  };
+
   private createForm() {
     this.form = document.createElement("form");
     this.form.className = "main__form form";
@@ -205,16 +228,22 @@ export class CarsView {
   }
 
   private async createGarage() {
-    const cars = await this.controller.handleGetCars();
+    const allCars = await this.controller.handleGetCars();
+    const cars = await this.controller.handleGetCarsOnPage(this.pageCount);
 
     this.garage = document.createElement("div");
     this.garage.className = "main__garage garage";
 
     const garageTitle = document.createElement("p");
     garageTitle.className = "garage__title";
-    garageTitle.innerHTML = `Garage: ${cars.length}`;
+    garageTitle.innerHTML = `Garage: ${allCars.length}`;
+
+    const garagePageCount = document.createElement("p");
+    garagePageCount.className = "garage__count";
+    garagePageCount.innerHTML = `Page: ${this.pageCount}`;
 
     this.garage.appendChild(garageTitle);
+    this.garage.appendChild(garagePageCount);
 
     for (let i = 0; i < cars.length; i += 1) {
       const car = cars[i];
@@ -279,18 +308,34 @@ export class CarsView {
     }
   }
 
+  private createPuginationButtons() {
+    this.pagination = document.createElement("div");
+    this.pagination.className = "pagination";
+    this.prev = document.createElement("button");
+    this.prev.className = "pagination__prev";
+    this.prev.innerHTML = "PREV";
+    this.prev.addEventListener("click", this.prevClick);
+    this.next = document.createElement("button");
+    this.next.className = "pagination__next";
+    this.next.innerHTML = "NEXT";
+    this.next.addEventListener("click", this.nextClick);
+    this.pagination.append(this.prev, this.next);
+  }
+
   public async updateGarage() {
     this.main.removeChild(this.garage);
     await this.createGarage();
-    this.main.appendChild(this.garage);
+    this.main.insertBefore(this.garage, this.pagination);
   }
 
   public async mount() {
     this.createForm();
     await this.createGarage();
+    this.createPuginationButtons();
     this.main = document.createElement("main");
     this.main.appendChild(this.form);
     this.main.appendChild(this.garage);
+    this.main.appendChild(this.pagination);
     this.root.appendChild(this.main);
   }
 }

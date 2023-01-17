@@ -14,12 +14,24 @@ interface IDriveEngine {
 }
 
 export class CarsModel {
-  constructor() {
-    this.getCars();
-  }
+  // constructor() {
+  //   this.getCars();
+  // }
 
   async getCars(): Promise<ICar[]> {
-    const response = await fetch("http://localhost:3000/garage");
+    const response = await fetch(`http://localhost:3000/garage`);
+    if (!response.ok) {
+      const message = `An error has occured: ${response.status}`;
+      throw new Error(message);
+    }
+    const data: Array<ICar> = await response.json();
+    return data;
+  }
+
+  async getCarsOnPage(page: number): Promise<ICar[]> {
+    const response = await fetch(
+      `http://localhost:3000/garage?_page=${page}&_limit=7`
+    );
     if (!response.ok) {
       const message = `An error has occured: ${response.status}`;
       throw new Error(message);
