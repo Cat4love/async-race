@@ -36,6 +36,8 @@ export class CarsView {
 
   private race!: HTMLButtonElement;
 
+  private raceMode!: boolean;
+
   private reset!: HTMLButtonElement;
 
   private car!: HTMLElement;
@@ -51,7 +53,6 @@ export class CarsView {
   constructor(root: HTMLElement, controller: CarsController) {
     this.root = root;
     this.controller = controller;
-    // this.createForm();
   }
 
   private createCarClick = async () => {
@@ -105,41 +106,57 @@ export class CarsView {
   };
 
   private startEngineClick = async (id: string) => {
-    // const startButtons = document.querySelectorAll(".box__start");
-    // for (let i = 0; i < startButtons.length; i += 1) {
-    //   if (startButtons[i].attributes[1].value === String(id)) {
-    //     const target = startButtons[i] as HTMLButtonElement;
-    //     const sibling = target.nextSibling;
-    //     if (sibling instanceof HTMLButtonElement) {
-    //       sibling.style.background = "red";
-    //       sibling.addEventListener("click", this.stopEngineClick(id), {
-    //         once: true,
-    //       });
-    //     }
-    //     target.style.background = "none";
-    //   }
-    // }
+    let target = null;
+    let sibling = null;
+    let result = null;
+
     if (id !== null) {
+      const startButtons = document.querySelectorAll(".box__start");
+      for (let i = 0; i < startButtons.length; i += 1) {
+        if (startButtons[i].attributes[1].value === String(id)) {
+          target = startButtons[i] as HTMLButtonElement;
+          target.style.background = "none";
+          if (target.nextSibling !== null) {
+            sibling = target.nextSibling as HTMLButtonElement;
+          }
+        }
+      }
+
       const start = await this.controller.handleSwitchEngine(id, "started");
       const duration = Number(start.distance) / Number(start.velocity);
       const car = document.getElementById(`car${id}`);
+      const carName = car?.getAttribute("data-name");
+
       if (car !== null) {
         car.style.animationDuration = `${duration}ms`;
         car.style.animationName = "slidein";
         car.style.animationFillMode = "forwards";
         car.style.animationTimingFunction = "linear";
         car.style.animationPlayState = "running";
-        const drive = await this.controller.handleDriveEngine(id);
+        try {
+          const drive = await this.controller.handleDriveEngine(id);
 
-        if (!drive.success) {
-          car.style.animationPlayState = "paused";
-          console.log(id, "сломался");
-          const result = [`${id}`, drive.success];
-          return Promise.reject(result);
+          if (!drive.success) {
+            car.style.animationPlayState = "paused";
+            console.log(id, "сломался");
+            result = Promise.reject();
+          } else {
+            console.log(id, "финишировал");
+            result = [id, carName, duration];
+          }
+          if (!this.raceMode && sibling !== null) {
+            sibling.style.background = "red";
+            sibling.addEventListener(
+              "click",
+              () => {
+                this.stopEngineClick(id);
+              },
+              { once: true }
+            );
+          }
+        } catch (error) {
+          console.log("ПОЛОМКА");
         }
-
-        console.log(id, "финишировал");
-        const result = [id, drive.success, duration];
         return result;
       }
     }
@@ -147,25 +164,45 @@ export class CarsView {
   };
 
   private stopEngineClick = async (id: string) => {
-    // const target = event.target as HTMLButtonElement;
-    // target.style.background = "none";
-    // const id = target.getAttribute("data-id");
+    let target = null;
+    let sibling = null;
+
+    await this.controller.handleSwitchEngine(id, "stopped");
     if (id !== null) {
       const car = document.getElementById(`car${id}`);
       if (car !== null) {
         car.style.animationPlayState = "paused";
         car.style.animationName = "";
       }
-      await this.controller.handleSwitchEngine(id, "stopped");
-      // const sibling = target.previousSibling;
-      // if (sibling instanceof HTMLButtonElement) {
-      //   sibling.style.background = "green";
-      // }
+
+      const stopButtons = document.querySelectorAll(".box__stop");
+      for (let i = 0; i < stopButtons.length; i += 1) {
+        if (stopButtons[i].attributes[1].value === String(id)) {
+          target = stopButtons[i] as HTMLButtonElement;
+          target.style.background = "none";
+          if (target.previousSibling !== null) {
+            sibling = target.previousSibling as HTMLButtonElement;
+          }
+        }
+      }
+
+      if (sibling !== null) {
+        sibling.addEventListener(
+          "click",
+          () => {
+            this.startEngineClick(id);
+          },
+          { once: true }
+        );
+        sibling.style.background = "green";
+      }
+
       console.log("stop", id);
     }
   };
 
   private raceClick = async () => {
+    this.raceMode = true;
     this.race.style.background = "none";
     this.prev.style.background = "none";
     this.next.style.background = "none";
@@ -183,7 +220,7 @@ export class CarsView {
       });
       if (winner !== null) {
         console.log(
-          winner[0],
+          winner[1],
           "ПОБЕДИЛ",
           `${(Number(winner[2]) / 1000).toFixed(2)}s`
         );
@@ -202,6 +239,7 @@ export class CarsView {
   };
 
   resetClick = async () => {
+    this.raceMode = false;
     this.reset.style.background = "none";
     const cars = await this.controller.handleGetCarsOnPage(this.pageCount);
     const carId = cars.map((car) => car.id);
@@ -325,10 +363,6 @@ export class CarsView {
       const box = document.createElement("div");
       box.className = "garage__box box";
 
-      const boxName = document.createElement("p");
-      boxName.className = "box__name";
-      boxName.innerHTML = car.name;
-
       this.selectCar = document.createElement("button");
       this.selectCar.className = "box__select";
       this.selectCar.innerHTML = "SELECT";
@@ -345,30 +379,34 @@ export class CarsView {
 
       this.startEngine = document.createElement("button");
       this.startEngine.className = "box__start";
+      this.startEngine.style.background = "green";
       this.startEngine.innerHTML = "A";
       this.startEngine.setAttribute("data-id", car.id);
-      this.startEngine.addEventListener("click", (event: Event) => {
-        const target = event.target as HTMLButtonElement;
-        const id = target.getAttribute("data-id");
-        if (id !== null) {
-          this.startEngineClick(id);
-        }
-      });
+      this.startEngine.addEventListener(
+        "click",
+        (event: Event) => {
+          const target = event.target as HTMLButtonElement;
+          const id = target.getAttribute("data-id");
+          if (id !== null && this.raceMode === false) {
+            this.startEngineClick(id);
+          }
+        },
+        { once: true }
+      );
 
       this.stopEngine = document.createElement("button");
       this.stopEngine.className = "box__stop";
+      this.stopEngine.style.background = "none";
       this.stopEngine.innerHTML = "B";
       this.stopEngine.setAttribute("data-id", car.id);
-      this.stopEngine.addEventListener("click", (event: Event) => {
-        const target = event.target as HTMLButtonElement;
-        const id = target.getAttribute("data-id");
-        if (id !== null) {
-          this.stopEngineClick(id);
-        }
-      });
+
+      const boxName = document.createElement("p");
+      boxName.className = "box__name";
+      boxName.innerHTML = car.name;
 
       this.car = document.createElement("div");
       this.car.id = `car${car.id}`;
+      this.car.setAttribute("data-name", car.name);
       this.car.className = "box__car car";
       this.car.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Pro 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M171.3 96H224v96H111.3l30.4-75.9C146.5 104 158.2 96 171.3 96zM272 192V96h81.2c9.7 0 18.9 4.4 25 12l67.2 84H272zm256.2 1L428.2 68c-18.2-22.8-45.8-36-75-36H171.3c-39.3 0-74.6 23.9-89.1 60.3L40.6 196.4C16.8 205.8 0 228.9 0 256V368c0 17.7 14.3 32 32 32H65.3c7.6 45.4 47.1 80 94.7 80s87.1-34.6 94.7-80H385.3c7.6 45.4 47.1 80 94.7 80s87.1-34.6 94.7-80H608c17.7 0 32-14.3 32-32V320c0-65.2-48.8-119-111.8-127zm-2.9 207c-6.6 18.6-24.4 32-45.3 32s-38.7-13.4-45.3-32c-1.8-5-2.7-10.4-2.7-16c0-26.5 21.5-48 48-48s48 21.5 48 48c0 5.6-1 11-2.7 16zM160 432c-20.9 0-38.7-13.4-45.3-32c-1.8-5-2.7-10.4-2.7-16c0-26.5 21.5-48 48-48s48 21.5 48 48c0 5.6-1 11-2.7 16c-6.6 18.6-24.4 32-45.3 32z"/></svg>`;
       this.car.style.fill = car.color;
@@ -430,6 +468,7 @@ export class CarsView {
   }
 
   public async mount() {
+    this.raceMode = false;
     this.createForm();
     await this.createGarage();
     this.createPuginationButtons();

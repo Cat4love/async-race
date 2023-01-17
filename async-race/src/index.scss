@@ -18,9 +18,9 @@ main {
     margin-bottom: -18px;
   }
 
-  &__start {
-    background: green;
-  }
+  // &__start {
+  //   background: green;
+  // }
 }
 
 .backgroud-default {
@@ -35,4 +35,10 @@ main {
   to {
     transform: translateX(90vw);
   }
+}
+
+.garage {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
