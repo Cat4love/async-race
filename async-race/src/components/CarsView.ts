@@ -34,6 +34,10 @@ export class CarsView {
 
   private stopEngine!: HTMLButtonElement;
 
+  private race!: HTMLButtonElement;
+
+  private reset!: HTMLButtonElement;
+
   private car!: HTMLElement;
 
   private pagination!: HTMLDivElement;
@@ -100,18 +104,21 @@ export class CarsView {
     await this.updateGarage();
   };
 
-  private startEngineClick = async (event: Event) => {
-    const target = event.target as HTMLButtonElement;
-    const sibling = target.nextSibling;
-    if (sibling instanceof HTMLButtonElement) {
-      sibling.style.background = "red";
-      sibling.addEventListener("click", this.stopEngineClick, {
-        once: true,
-      });
-    }
-    target.style.background = "none";
-    const id = target.getAttribute("data-id");
-    console.log("start", id);
+  private startEngineClick = async (id: string) => {
+    // const startButtons = document.querySelectorAll(".box__start");
+    // for (let i = 0; i < startButtons.length; i += 1) {
+    //   if (startButtons[i].attributes[1].value === String(id)) {
+    //     const target = startButtons[i] as HTMLButtonElement;
+    //     const sibling = target.nextSibling;
+    //     if (sibling instanceof HTMLButtonElement) {
+    //       sibling.style.background = "red";
+    //       sibling.addEventListener("click", this.stopEngineClick(id), {
+    //         once: true,
+    //       });
+    //     }
+    //     target.style.background = "none";
+    //   }
+    // }
     if (id !== null) {
       const start = await this.controller.handleSwitchEngine(id, "started");
       const duration = Number(start.distance) / Number(start.velocity);
@@ -123,18 +130,26 @@ export class CarsView {
         car.style.animationTimingFunction = "linear";
         car.style.animationPlayState = "running";
         const drive = await this.controller.handleDriveEngine(id);
+
         if (!drive.success) {
           car.style.animationPlayState = "paused";
+          console.log(id, "сломался");
+          const result = [`${id}`, drive.success];
+          return Promise.reject(result);
         }
-        console.log("финиш", drive.success, id);
+
+        console.log(id, "финишировал");
+        const result = [id, drive.success, duration];
+        return result;
       }
     }
+    return null;
   };
 
-  private stopEngineClick = async (event: Event) => {
-    const target = event.target as HTMLButtonElement;
-    target.style.background = "none";
-    const id = target.getAttribute("data-id");
+  private stopEngineClick = async (id: string) => {
+    // const target = event.target as HTMLButtonElement;
+    // target.style.background = "none";
+    // const id = target.getAttribute("data-id");
     if (id !== null) {
       const car = document.getElementById(`car${id}`);
       if (car !== null) {
@@ -142,22 +157,70 @@ export class CarsView {
         car.style.animationName = "";
       }
       await this.controller.handleSwitchEngine(id, "stopped");
-      const sibling = target.previousSibling;
-      if (sibling instanceof HTMLButtonElement) {
-        sibling.style.background = "green";
-        sibling.addEventListener("click", this.startEngineClick, {
-          once: true,
-        });
-      }
+      // const sibling = target.previousSibling;
+      // if (sibling instanceof HTMLButtonElement) {
+      //   sibling.style.background = "green";
+      // }
       console.log("stop", id);
     }
+  };
+
+  private raceClick = async () => {
+    this.race.style.background = "none";
+    this.prev.style.background = "none";
+    this.next.style.background = "none";
+    this.next.removeEventListener("click", this.nextClick);
+    this.prev.removeEventListener("click", this.prevClick);
+    const cars = await this.controller.handleGetCarsOnPage(this.pageCount);
+    const carId = cars.map((car) => car.id);
+    const promises = carId.map(async (car) => {
+      const start = await this.startEngineClick(car);
+      return start;
+    });
+    try {
+      const winner = await Promise.any(promises).then((value) => {
+        return value;
+      });
+      if (winner !== null) {
+        console.log(
+          winner[0],
+          "ПОБЕДИЛ",
+          `${(Number(winner[2]) / 1000).toFixed(2)}s`
+        );
+      }
+    } catch (error) {
+      console.log("ПОБЕДИТЕЛЕЙ НЕТ");
+    }
+
+    await Promise.allSettled(promises).then((results) => results);
+    console.log("ЗАЕЗД ОКОНЧЕН");
+    this.next.addEventListener("click", this.nextClick);
+    this.prev.addEventListener("click", this.prevClick);
+    this.updatePuginationButtons();
+    this.reset.style.background = "green";
+    this.reset.addEventListener("click", this.resetClick, { once: true });
+  };
+
+  resetClick = async () => {
+    this.reset.style.background = "none";
+    const cars = await this.controller.handleGetCarsOnPage(this.pageCount);
+    const carId = cars.map((car) => car.id);
+    const promises = carId.map(async (car) => {
+      const stop = await this.stopEngineClick(car);
+      return stop;
+    });
+    await Promise.all(promises);
+    this.race.style.background = "green";
+    this.race.addEventListener("click", this.raceClick, { once: true });
   };
 
   private prevClick = () => {
     if (this.pageCount > 1) {
       this.pageCount -= 1;
     }
+    this.resetClick();
     this.updateGarage();
+    this.updatePuginationButtons();
   };
 
   private nextClick = async () => {
@@ -165,7 +228,9 @@ export class CarsView {
     if (cars.length > 0) {
       this.pageCount += 1;
     }
+    this.resetClick();
     this.updateGarage();
+    this.updatePuginationButtons();
   };
 
   private createForm() {
@@ -206,15 +271,18 @@ export class CarsView {
     this.updateCar.type = "button";
     this.updateCar.addEventListener("click", this.updateCarClick);
 
-    const race = document.createElement("button");
-    race.className = "form__button";
-    race.type = "button";
-    race.innerHTML = "RACE";
+    this.race = document.createElement("button");
+    this.race.className = "form__button";
+    this.race.style.background = "green";
+    this.race.type = "button";
+    this.race.innerHTML = "RACE";
+    this.race.addEventListener("click", this.raceClick, { once: true });
 
-    const reset = document.createElement("button");
-    reset.className = "form__button";
-    reset.type = "button";
-    reset.innerHTML = "RESET";
+    this.reset = document.createElement("button");
+    this.reset.className = "form__button";
+    this.reset.style.background = "none";
+    this.reset.type = "button";
+    this.reset.innerHTML = "RESET";
 
     const generateCars = document.createElement("button");
     generateCars.className = "form__button";
@@ -224,7 +292,13 @@ export class CarsView {
     fieldsetCreate.append(this.inputName, this.inputColor, this.createCar);
     fieldsetUpdate.append(this.updateName, this.updateColor, this.updateCar);
     this.form.appendChild(fieldsetCreate);
-    this.form.append(fieldsetCreate, fieldsetUpdate, race, reset, generateCars);
+    this.form.append(
+      fieldsetCreate,
+      fieldsetUpdate,
+      this.race,
+      this.reset,
+      generateCars
+    );
   }
 
   private async createGarage() {
@@ -273,17 +347,25 @@ export class CarsView {
       this.startEngine.className = "box__start";
       this.startEngine.innerHTML = "A";
       this.startEngine.setAttribute("data-id", car.id);
-      this.startEngine.addEventListener("click", this.startEngineClick, {
-        once: true,
+      this.startEngine.addEventListener("click", (event: Event) => {
+        const target = event.target as HTMLButtonElement;
+        const id = target.getAttribute("data-id");
+        if (id !== null) {
+          this.startEngineClick(id);
+        }
       });
 
       this.stopEngine = document.createElement("button");
       this.stopEngine.className = "box__stop";
       this.stopEngine.innerHTML = "B";
       this.stopEngine.setAttribute("data-id", car.id);
-      // this.stopEngine.addEventListener("click", this.stopEngineClick, {
-      //   once: true,
-      // });
+      this.stopEngine.addEventListener("click", (event: Event) => {
+        const target = event.target as HTMLButtonElement;
+        const id = target.getAttribute("data-id");
+        if (id !== null) {
+          this.stopEngineClick(id);
+        }
+      });
 
       this.car = document.createElement("div");
       this.car.id = `car${car.id}`;
@@ -308,18 +390,37 @@ export class CarsView {
     }
   }
 
-  private createPuginationButtons() {
+  private async createPuginationButtons() {
     this.pagination = document.createElement("div");
     this.pagination.className = "pagination";
     this.prev = document.createElement("button");
     this.prev.className = "pagination__prev";
     this.prev.innerHTML = "PREV";
-    this.prev.addEventListener("click", this.prevClick);
+    if (this.pageCount > 1) {
+      this.prev.style.background = "green";
+      this.prev.addEventListener("click", this.prevClick);
+    } else {
+      this.prev.style.background = "none";
+      this.prev.removeEventListener("click", this.prevClick);
+    }
     this.next = document.createElement("button");
     this.next.className = "pagination__next";
     this.next.innerHTML = "NEXT";
-    this.next.addEventListener("click", this.nextClick);
+    const cars = await this.controller.handleGetCarsOnPage(this.pageCount + 1);
+    if (cars.length > 0) {
+      this.next.style.background = "green";
+      this.next.addEventListener("click", this.nextClick);
+    } else {
+      this.next.style.background = "none";
+      this.next.removeEventListener("click", this.nextClick);
+    }
     this.pagination.append(this.prev, this.next);
+  }
+
+  private async updatePuginationButtons() {
+    this.main.removeChild(this.pagination);
+    await this.createPuginationButtons();
+    this.main.appendChild(this.pagination);
   }
 
   public async updateGarage() {
