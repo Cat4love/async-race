@@ -24,6 +24,8 @@ export class CarsView {
 
   private garage!: HTMLDivElement;
 
+  private boxes!: HTMLDivElement;
+
   private selectCar!: HTMLButtonElement;
 
   private selectCardId!: string | null;
@@ -39,6 +41,8 @@ export class CarsView {
   private raceMode!: boolean;
 
   private reset!: HTMLButtonElement;
+
+  private generateCars!: HTMLButtonElement;
 
   private car!: HTMLElement;
 
@@ -56,53 +60,75 @@ export class CarsView {
   }
 
   private createCarClick = async () => {
-    if (
-      this.inputName instanceof HTMLInputElement &&
-      this.inputColor instanceof HTMLInputElement
-    ) {
-      const create = await this.controller.handleCreateCar(
-        this.inputName.value,
-        this.inputColor.value
-      );
-      console.log("create:", create);
-      await this.updateGarage();
+    if (this.raceMode === false) {
+      if (
+        this.inputName instanceof HTMLInputElement &&
+        this.inputColor instanceof HTMLInputElement
+      ) {
+        const create = await this.controller.handleCreateCar(
+          (this.inputName.value = "Auto"),
+          this.inputColor.value
+        );
+        await this.updateGarage();
+        await this.updatePuginationButtons();
+        this.inputName.value = "";
+        this.inputColor.value = "#0000000";
+        console.log("create:", create);
+      }
     }
   };
 
   private updateCarClick = async () => {
-    if (
-      this.updateName instanceof HTMLInputElement &&
-      this.updateColor instanceof HTMLInputElement &&
-      this.selectCardId !== null
-    ) {
-      const update = await this.controller.handleUpdateCar(
-        this.updateName.value,
-        this.updateColor.value,
-        this.selectCardId
-      );
-      console.log("update:", update);
-      await this.updateGarage();
+    if (this.raceMode === false) {
+      if (
+        this.updateName instanceof HTMLInputElement &&
+        this.updateColor instanceof HTMLInputElement &&
+        this.selectCardId !== null
+      ) {
+        const update = await this.controller.handleUpdateCar(
+          this.updateName.value,
+          this.updateColor.value,
+          this.selectCardId
+        );
+        await this.updateGarage();
+        this.updateCar.style.background = "none";
+        this.updateName.value = "";
+        this.updateColor.value = "#0000000";
+        this.selectCardId = null;
+        console.log("update:", update);
+      }
     }
   };
 
   private selectCarClick = (event: Event) => {
-    const target = event.target as HTMLButtonElement;
-    this.selectCardId = target.getAttribute("data-id");
-    const color = target.getAttribute("data-color");
-    const name = target.getAttribute("data-name");
-    if (color !== null && name !== null) {
-      this.updateName.value = name;
-      this.updateColor.value = color;
+    if (this.raceMode === false) {
+      const target = event.target as HTMLButtonElement;
+      this.selectCardId = target.getAttribute("data-id");
+      const color = target.getAttribute("data-color");
+      const name = target.getAttribute("data-name");
+      if (color !== null && name !== null) {
+        this.updateName.value = name;
+        this.updateColor.value = color;
+      }
+      this.updateCar.style.background = "aquamarine";
     }
   };
 
   private removeCarClick = async (event: Event) => {
-    const target = event.target as HTMLButtonElement;
-    const id = target.getAttribute("data-id");
-    if (id !== null) {
-      await this.controller.handleRemoveCar(id);
+    if (this.raceMode === false) {
+      const target = event.target as HTMLButtonElement;
+      const id = target.getAttribute("data-id");
+      if (id === this.selectCardId) {
+        this.updateCar.style.background = "none";
+        this.updateName.value = "";
+        this.updateColor.value = "#000000";
+      }
+      if (id !== null) {
+        await this.controller.handleRemoveCar(id);
+      }
+      await this.updateGarage();
+      await this.updatePuginationButtons();
     }
-    await this.updateGarage();
   };
 
   private startEngineClick = async (id: string) => {
@@ -202,7 +228,7 @@ export class CarsView {
   };
 
   private raceClick = async () => {
-    this.raceMode = true;
+    this.raceSwitch(true);
     this.race.style.background = "none";
     this.prev.style.background = "none";
     this.next.style.background = "none";
@@ -239,7 +265,7 @@ export class CarsView {
   };
 
   resetClick = async () => {
-    this.raceMode = false;
+    this.raceSwitch(false);
     this.reset.style.background = "none";
     const cars = await this.controller.handleGetCarsOnPage(this.pageCount);
     const carId = cars.map((car) => car.id);
@@ -271,9 +297,43 @@ export class CarsView {
     this.updatePuginationButtons();
   };
 
+  raceSwitch = (flag: boolean) => {
+    this.raceMode = flag;
+    const selectButtonsCollection =
+      document.getElementsByClassName("box__select");
+    const selectButtons = [...selectButtonsCollection];
+    const removeButtonsCollection =
+      document.getElementsByClassName("box__remove");
+    const removeButtons = [...removeButtonsCollection];
+    if (flag) {
+      this.createCar.style.background = "none";
+      this.updateCar.style.background = "none";
+      this.generateCars.style.background = "none";
+      for (let i = 0; i < selectButtons.length; i += 1) {
+        const select = selectButtons[i] as HTMLButtonElement;
+        select.style.background = "none";
+        const remove = removeButtons[i] as HTMLButtonElement;
+        remove.style.background = "none";
+      }
+    } else {
+      this.createCar.style.background = "aquamarine";
+      this.generateCars.style.background = "aquamarine";
+      if (this.selectCardId !== null && this.selectCardId !== undefined) {
+        console.log("ok");
+        this.updateCar.style.background = "aquamarine";
+      }
+      for (let i = 0; i < selectButtons.length; i += 1) {
+        const select = selectButtons[i] as HTMLButtonElement;
+        select.style.background = "aquamarine";
+        const remove = removeButtons[i] as HTMLButtonElement;
+        remove.style.background = "aquamarine";
+      }
+    }
+  };
+
   private createForm() {
     this.form = document.createElement("form");
-    this.form.className = "main__form form";
+    this.form.className = "garage__form form";
 
     const fieldsetCreate = document.createElement("fieldset");
     fieldsetCreate.className = "form__fieldset fieldset";
@@ -281,6 +341,7 @@ export class CarsView {
     this.inputName = document.createElement("input");
     this.inputName.className = "fieldset__input_text";
     this.inputName.type = "text";
+    this.inputName.placeholder = "Enter car name";
 
     this.inputColor = document.createElement("input");
     this.inputColor.className = "fieldset__input_color";
@@ -289,6 +350,7 @@ export class CarsView {
     this.createCar = document.createElement("button");
     this.createCar.className = "fieldset__button";
     this.createCar.innerText = "CREATE";
+    this.createCar.style.background = "aquamarine";
     this.createCar.type = "button";
     this.createCar.addEventListener("click", this.createCarClick);
 
@@ -298,6 +360,7 @@ export class CarsView {
     this.updateName = document.createElement("input");
     this.updateName.className = "fieldset__input_text";
     this.updateName.type = "text";
+    this.updateName.placeholder = "Choose a car";
 
     this.updateColor = document.createElement("input");
     this.updateColor.className = "fieldset__input_color";
@@ -307,6 +370,7 @@ export class CarsView {
     this.updateCar.className = "fieldset__button";
     this.updateCar.innerHTML = "UPDATE";
     this.updateCar.type = "button";
+    this.updateCar.style.background = "none";
     this.updateCar.addEventListener("click", this.updateCarClick);
 
     this.race = document.createElement("button");
@@ -322,48 +386,54 @@ export class CarsView {
     this.reset.type = "button";
     this.reset.innerHTML = "RESET";
 
-    const generateCars = document.createElement("button");
-    generateCars.className = "form__button";
-    generateCars.type = "button";
-    generateCars.innerHTML = "GENERATE";
+    this.generateCars = document.createElement("button");
+    this.generateCars.style.background = "none";
+    this.generateCars.className = "form__button";
+    this.generateCars.style.background = "aquamarine";
+    this.generateCars.type = "button";
+    this.generateCars.innerHTML = "GENERATE";
+
+    const formButtons = document.createElement("div");
+    formButtons.className = "form__buttons";
+    formButtons.append(this.race, this.reset, this.generateCars);
 
     fieldsetCreate.append(this.inputName, this.inputColor, this.createCar);
     fieldsetUpdate.append(this.updateName, this.updateColor, this.updateCar);
-    this.form.appendChild(fieldsetCreate);
-    this.form.append(
-      fieldsetCreate,
-      fieldsetUpdate,
-      this.race,
-      this.reset,
-      generateCars
-    );
+    this.form.append(fieldsetCreate, fieldsetUpdate);
+    this.form.append(formButtons);
   }
 
-  private async createGarage() {
+  private async createBoxes() {
     const allCars = await this.controller.handleGetCars();
-    const cars = await this.controller.handleGetCarsOnPage(this.pageCount);
+    let cars = await this.controller.handleGetCarsOnPage(this.pageCount);
 
-    this.garage = document.createElement("div");
-    this.garage.className = "main__garage garage";
+    if (cars.length === 0 && this.pageCount > 1) {
+      this.pageCount -= 1;
+      cars = await this.controller.handleGetCarsOnPage(this.pageCount);
+    }
 
-    const garageTitle = document.createElement("p");
-    garageTitle.className = "garage__title";
-    garageTitle.innerHTML = `Garage: ${allCars.length}`;
+    this.boxes = document.createElement("div");
+    this.boxes.className = "garage__boxes boxes";
 
-    const garagePageCount = document.createElement("p");
-    garagePageCount.className = "garage__count";
-    garagePageCount.innerHTML = `Page: ${this.pageCount}`;
+    const boxesTitle = document.createElement("p");
+    boxesTitle.className = "boxes__title";
+    boxesTitle.innerHTML = `Garage(${allCars.length})`;
 
-    this.garage.appendChild(garageTitle);
-    this.garage.appendChild(garagePageCount);
+    const boxesPageCount = document.createElement("p");
+    boxesPageCount.className = "boxes__count";
+    boxesPageCount.innerHTML = `Page: ${this.pageCount}`;
+
+    this.boxes.appendChild(boxesTitle);
+    this.boxes.appendChild(boxesPageCount);
 
     for (let i = 0; i < cars.length; i += 1) {
       const car = cars[i];
 
       const box = document.createElement("div");
-      box.className = "garage__box box";
+      box.className = "boxes__box box";
 
       this.selectCar = document.createElement("button");
+      this.selectCar.style.background = "aquamarine";
       this.selectCar.className = "box__select";
       this.selectCar.innerHTML = "SELECT";
       this.selectCar.setAttribute("data-id", car.id);
@@ -372,6 +442,7 @@ export class CarsView {
       this.selectCar.addEventListener("click", this.selectCarClick);
 
       this.removeCar = document.createElement("button");
+      this.removeCar.style.background = "aquamarine";
       this.removeCar.className = "box__remove";
       this.removeCar.innerHTML = "REMOVE";
       this.removeCar.setAttribute("data-id", car.id);
@@ -400,6 +471,15 @@ export class CarsView {
       this.stopEngine.innerHTML = "B";
       this.stopEngine.setAttribute("data-id", car.id);
 
+      const boxButtons = document.createElement("div");
+      boxButtons.className = "box__buttons";
+      boxButtons.append(
+        this.selectCar,
+        this.removeCar,
+        this.startEngine,
+        this.stopEngine
+      );
+
       const boxName = document.createElement("p");
       boxName.className = "box__name";
       boxName.innerHTML = car.name;
@@ -414,28 +494,26 @@ export class CarsView {
       const road = document.createElement("div");
       road.className = "box__road";
 
-      box.append(
-        boxName,
-        this.car,
-        road,
-        this.selectCar,
-        this.removeCar,
-        this.startEngine,
-        this.stopEngine
-      );
+      const flag = document.createElement("div");
+      flag.innerHTML = `<svg width="50px" height="50px" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <title>flag-racing-solid</title> <g id="Layer_2" data-name="Layer 2"> <g id="invisible_box" data-name="invisible box"> <rect width="48" height="48" fill="none"></rect> </g> <g id="icons_Q2" data-name="icons Q2"> <g> <path d="M26,6V4a2,2,0,0,0-2-2H6V44a2,2,0,0,0,4,0V26H22v2a2,2,0,0,0,2,2H42V6ZM38,18H34v4h4v4H34V22H30v4H26V22H22V18H18v4H14V18H10V14h4V10H10V6h4v4h4V6h4v4h4v4h4V10h4v4h4Z"></path> <rect x="14" y="14" width="4" height="4"></rect> <rect x="18" y="10" width="4" height="4"></rect> <rect x="22" y="14" width="4" height="4"></rect> <rect x="26" y="18" width="4" height="4"></rect> <rect x="30" y="14" width="4" height="4"></rect> </g> </g> </g> </g></svg>`;
+      flag.className = "box__flag";
 
-      this.garage.append(box);
+      road.append(flag);
+
+      box.append(boxName, this.car, road, boxButtons);
+
+      this.boxes.append(box);
     }
   }
 
   private async createPuginationButtons() {
     this.pagination = document.createElement("div");
-    this.pagination.className = "pagination";
+    this.pagination.className = "garage__pagination pagination";
     this.prev = document.createElement("button");
     this.prev.className = "pagination__prev";
     this.prev.innerHTML = "PREV";
     if (this.pageCount > 1) {
-      this.prev.style.background = "green";
+      this.prev.style.background = "aquamarine";
       this.prev.addEventListener("click", this.prevClick);
     } else {
       this.prev.style.background = "none";
@@ -446,7 +524,7 @@ export class CarsView {
     this.next.innerHTML = "NEXT";
     const cars = await this.controller.handleGetCarsOnPage(this.pageCount + 1);
     if (cars.length > 0) {
-      this.next.style.background = "green";
+      this.next.style.background = "aquamarine";
       this.next.addEventListener("click", this.nextClick);
     } else {
       this.next.style.background = "none";
@@ -456,26 +534,27 @@ export class CarsView {
   }
 
   private async updatePuginationButtons() {
-    this.main.removeChild(this.pagination);
+    this.garage.removeChild(this.pagination);
     await this.createPuginationButtons();
-    this.main.appendChild(this.pagination);
+    this.garage.appendChild(this.pagination);
   }
 
   public async updateGarage() {
-    this.main.removeChild(this.garage);
-    await this.createGarage();
-    this.main.insertBefore(this.garage, this.pagination);
+    this.garage.removeChild(this.boxes);
+    await this.createBoxes();
+    this.garage.insertBefore(this.boxes, this.pagination);
   }
 
   public async mount() {
     this.raceMode = false;
     this.createForm();
-    await this.createGarage();
+    await this.createBoxes();
     this.createPuginationButtons();
     this.main = document.createElement("main");
-    this.main.appendChild(this.form);
+    this.garage = document.createElement("div");
+    this.garage.className = "garage";
+    this.garage.append(this.form, this.boxes, this.pagination);
     this.main.appendChild(this.garage);
-    this.main.appendChild(this.pagination);
     this.root.appendChild(this.main);
   }
 }

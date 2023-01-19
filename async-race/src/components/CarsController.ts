@@ -16,17 +16,17 @@ export class CarsController {
   }
 
   public async handleCreateCar(name: string, color: string) {
-    if (!name || !color) {
-      throw Error("Укажите name и color");
-    }
+    // if (!name || !color) {
+    //   throw Error("Укажите name и color");
+    // }
 
-    const cars = await this.model.getCars();
-    for (let i = 0; i < cars.length; i += 1) {
-      const car = cars[i];
-      if (car.name === name && car.color === color) {
-        throw Error("Такая машина уже есть");
-      }
-    }
+    // const cars = await this.model.getCars();
+    // for (let i = 0; i < cars.length; i += 1) {
+    //   const car = cars[i];
+    //   if (car.name === name && car.color === color) {
+    //     throw Error("Такая машина уже есть");
+    //   }
+    // }
 
     return this.model.createCar(name, color);
   }

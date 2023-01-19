@@ -1,26 +1,120 @@
+* {
+  box-sizing: border-box;
+}
+
+html{
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {  
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  min-height: 100vh;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 5px;
+  font-family: 'Roboto', sans-serif;
+  font-style: normal;
+  font-size: 16px;
+}
+
 main {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
+.garage {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  &__fieldset{
+    padding: 0px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__buttons{
+    display: flex;
+    justify-content: space-between;
+  }
+  &__button {
+    padding: 0px 20px;
+  }
+}
+
+.boxes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  &__title {
+    font-size: 24px;
+    margin: 0px;
+  }
+
+  &__count {
+    font-size: 20px;
+    margin: 0px;
+  }
+}
+
+
 
 .box {
   &__road {
-    width: 100vw;
+    width: 99vw;
     height: 2px;
-    border-top: 2px solid black;
+    border-top: 2px dashed black;
+    position: relative;
+    margin-bottom: 5px;
   }
   &__car {
-    width: 70px;
-    height: 70px;
+    width: 50px;
+    height: 50px;
     padding: 0px;
-    margin-bottom: -18px;
+    margin: 0px 0px -12px 0px;
+    z-index: 1;
   }
 
-  // &__start {
-  //   background: green;
-  // }
+  &__flag  {
+    width: 64px;
+    height: 64px;
+    position: absolute;
+    bottom: -14px;
+    left: calc(95vw - 65px);
+  }
+  &__name {
+    display: block;
+    margin: 0px 5px 10px 5px;
+  }
+  &__buttons{
+    display: flex;
+    gap: 2px;
+  }
 }
 
 .backgroud-default {
@@ -33,12 +127,7 @@ main {
   }
 
   to {
-    transform: translateX(90vw);
+    transform: translateX(calc(95vw - 50px));
   }
 }
 
-.garage {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
