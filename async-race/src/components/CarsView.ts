@@ -42,6 +42,8 @@ export class CarsView {
 
   private reset!: HTMLButtonElement;
 
+  private winner!: HTMLParagraphElement;
+
   private generateCars!: HTMLButtonElement;
 
   private car!: HTMLElement;
@@ -72,7 +74,6 @@ export class CarsView {
         await this.updateGarage();
         await this.updatePuginationButtons();
         this.inputName.value = "";
-        this.inputColor.value = "#0000000";
         console.log("create:", create);
       }
     }
@@ -164,8 +165,8 @@ export class CarsView {
 
           if (!drive.success) {
             car.style.animationPlayState = "paused";
+            result = Promise.reject(new Error(`${carName}: сломался`));
             console.log(id, "сломался");
-            result = Promise.reject();
           } else {
             console.log(id, "финишировал");
             result = [id, carName, duration];
@@ -180,10 +181,11 @@ export class CarsView {
               { once: true }
             );
           }
+          return await result;
         } catch (error) {
-          console.log("ПОЛОМКА");
+          console.log(error);
+          return await result;
         }
-        return result;
       }
     }
     return null;
@@ -229,11 +231,6 @@ export class CarsView {
 
   private raceClick = async () => {
     this.raceSwitch(true);
-    this.race.style.background = "none";
-    this.prev.style.background = "none";
-    this.next.style.background = "none";
-    this.next.removeEventListener("click", this.nextClick);
-    this.prev.removeEventListener("click", this.prevClick);
     const cars = await this.controller.handleGetCarsOnPage(this.pageCount);
     const carId = cars.map((car) => car.id);
     const promises = carId.map(async (car) => {
@@ -245,28 +242,27 @@ export class CarsView {
         return value;
       });
       if (winner !== null) {
-        console.log(
-          winner[1],
-          "ПОБЕДИЛ",
-          `${(Number(winner[2]) / 1000).toFixed(2)}s`
-        );
+        this.winner.innerHTML = `"${winner[1]} went first ${(
+          Number(winner[2]) / 1000
+        ).toFixed(2)}s"`;
+        this.winner.style.color = "green";
+        this.winner.style.display = "block";
       }
     } catch (error) {
-      console.log("ПОБЕДИТЕЛЕЙ НЕТ");
+      this.winner.style.color = "red";
+      this.winner.innerHTML = '"all cars are broken"';
+      this.winner.style.display = "block";
     }
 
     await Promise.allSettled(promises).then((results) => results);
     console.log("ЗАЕЗД ОКОНЧЕН");
-    this.next.addEventListener("click", this.nextClick);
-    this.prev.addEventListener("click", this.prevClick);
-    this.updatePuginationButtons();
     this.reset.style.background = "green";
     this.reset.addEventListener("click", this.resetClick, { once: true });
   };
 
   resetClick = async () => {
     this.raceSwitch(false);
-    this.reset.style.background = "none";
+
     const cars = await this.controller.handleGetCarsOnPage(this.pageCount);
     const carId = cars.map((car) => car.id);
     const promises = carId.map(async (car) => {
@@ -298,7 +294,6 @@ export class CarsView {
   };
 
   raceSwitch = (flag: boolean) => {
-    this.raceMode = flag;
     const selectButtonsCollection =
       document.getElementsByClassName("box__select");
     const selectButtons = [...selectButtonsCollection];
@@ -306,6 +301,12 @@ export class CarsView {
       document.getElementsByClassName("box__remove");
     const removeButtons = [...removeButtonsCollection];
     if (flag) {
+      this.raceMode = true;
+      this.race.style.background = "none";
+      this.prev.style.background = "none";
+      this.next.style.background = "none";
+      this.next.removeEventListener("click", this.nextClick);
+      this.prev.removeEventListener("click", this.prevClick);
       this.createCar.style.background = "none";
       this.updateCar.style.background = "none";
       this.generateCars.style.background = "none";
@@ -316,6 +317,12 @@ export class CarsView {
         remove.style.background = "none";
       }
     } else {
+      this.raceMode = false;
+      this.reset.style.background = "none";
+      this.winner.style.display = "none";
+      this.next.addEventListener("click", this.nextClick);
+      this.prev.addEventListener("click", this.prevClick);
+      this.updatePuginationButtons();
       this.createCar.style.background = "aquamarine";
       this.generateCars.style.background = "aquamarine";
       if (this.selectCardId !== null && this.selectCardId !== undefined) {
@@ -545,7 +552,10 @@ export class CarsView {
     this.garage.insertBefore(this.boxes, this.pagination);
   }
 
-  public async mount() {
+  public mount = async () => {
+    this.winner = document.createElement("p");
+    this.winner.innerHTML = "WINNER";
+    this.winner.className = "garage__winner winner";
     this.raceMode = false;
     this.createForm();
     await this.createBoxes();
@@ -553,8 +563,8 @@ export class CarsView {
     this.main = document.createElement("main");
     this.garage = document.createElement("div");
     this.garage.className = "garage";
-    this.garage.append(this.form, this.boxes, this.pagination);
+    this.garage.append(this.form, this.boxes, this.pagination, this.winner);
     this.main.appendChild(this.garage);
     this.root.appendChild(this.main);
-  }
+  };
 }
