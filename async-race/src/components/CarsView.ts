@@ -62,13 +62,23 @@ export class CarsView {
 
   private car!: HTMLElement;
 
-  private pagination!: HTMLDivElement;
+  private garagePagination!: HTMLDivElement;
+
+  private winnersPagination!: HTMLDivElement;
 
   private prev!: HTMLButtonElement;
 
   private next!: HTMLButtonElement;
 
+  private winPrev!: HTMLButtonElement;
+
+  private winNext!: HTMLButtonElement;
+
   private pageCount = 1;
+
+  private winnersPageCount = 1;
+
+  private isGaragePage = true;
 
   constructor(root: HTMLElement, controller: CarsController) {
     this.root = root;
@@ -86,7 +96,7 @@ export class CarsView {
           this.inputColor.value
         );
         await this.updateBoxes();
-        await this.updatePuginationButtons();
+        await this.updatePuginationGarage();
         this.inputName.value = "";
         this.inputColor.value = "#000000";
         console.log("create:", create);
@@ -144,7 +154,7 @@ export class CarsView {
         await this.eraseWhinner(id);
       }
       await this.updateBoxes();
-      await this.updatePuginationButtons();
+      await this.updatePuginationGarage();
     }
   };
 
@@ -367,10 +377,9 @@ export class CarsView {
     if (this.pageCount > 1) {
       this.pageCount -= 1;
     }
-    // await this.resetClick();
     this.driveCount = 0;
-    this.updateBoxes();
-    this.updatePuginationButtons();
+    await this.updateBoxes();
+    this.updatePuginationGarage();
   };
 
   private nextClick = async () => {
@@ -378,10 +387,9 @@ export class CarsView {
     if (cars.length > 0) {
       this.pageCount += 1;
     }
-    // await this.resetClick();
     this.driveCount = 0;
-    this.updateBoxes();
-    this.updatePuginationButtons();
+    await this.updateBoxes();
+    this.updatePuginationGarage();
   };
 
   private driveSwitch = async () => {
@@ -452,7 +460,7 @@ export class CarsView {
         remove.addEventListener("click", this.removeCarClick);
         remove.style.background = "aquamarine";
       }
-      await this.updatePuginationButtons();
+      await this.updatePuginationGarage();
     }
   };
 
@@ -645,9 +653,9 @@ export class CarsView {
     }
   }
 
-  private async createPuginationButtons() {
-    this.pagination = document.createElement("div");
-    this.pagination.className = "garage__pagination pagination";
+  private async createPuginationGarage() {
+    this.garagePagination = document.createElement("div");
+    this.garagePagination.className = "garage__pagination pagination";
     this.prev = document.createElement("button");
     this.prev.className = "pagination__prev";
     this.prev.innerHTML = "PREV";
@@ -669,21 +677,21 @@ export class CarsView {
       this.next.style.background = "none";
       this.next.removeEventListener("click", this.nextClick);
     }
-    this.pagination.append(this.prev, this.next);
+    this.garagePagination.append(this.prev, this.next);
   }
-
-  private updatePuginationButtons = async () => {
-    this.garage.removeChild(this.pagination);
-    await this.createPuginationButtons();
-    this.garage.appendChild(this.pagination);
-    // this.garage.appendChild(this.pagination);
-  };
 
   private async updateBoxes() {
     this.garage.removeChild(this.boxes);
     await this.createBoxes();
-    this.garage.insertBefore(this.boxes, this.pagination);
+    this.garage.insertBefore(this.boxes, this.garagePagination);
   }
+
+  private updatePuginationGarage = async () => {
+    this.garage.removeChild(this.garagePagination);
+    await this.createPuginationGarage();
+    this.garage.appendChild(this.garagePagination);
+    // this.garage.appendChild(this.pagination);
+  };
 
   private createGarage = async () => {
     this.winner = document.createElement("p");
@@ -691,11 +699,16 @@ export class CarsView {
     this.winner.className = "garage__winner winner";
     this.createForm();
     await this.createBoxes();
-    this.createPuginationButtons();
+    this.createPuginationGarage();
     this.garage = document.createElement("div");
     this.garage.className = "main__garage garage";
     this.garage.style.display = "flex";
-    this.garage.append(this.form, this.boxes, this.pagination, this.winner);
+    this.garage.append(
+      this.form,
+      this.boxes,
+      this.garagePagination,
+      this.winner
+    );
   };
 
   private createNavigationButton = () => {
@@ -708,11 +721,13 @@ export class CarsView {
 
   private switchPage = () => {
     if (this.garage.style.display !== "flex") {
+      this.isGaragePage = true;
       this.navigation.innerHTML = "TO WINNERS";
       this.garage.style.display = "flex";
       this.winners.style.display = "none";
       window.location.href = "#garage";
     } else if (this.garage.style.display === "flex") {
+      this.isGaragePage = false;
       this.navigation.innerHTML = "TO GARAGE";
       this.garage.style.display = "none";
       this.winners.style.display = "flex";
@@ -720,12 +735,85 @@ export class CarsView {
     }
   };
 
+  private async createPuginationWinners() {
+    this.winnersPagination = document.createElement("div");
+    this.winnersPagination.className = "winners__pagination pagination";
+    this.winPrev = document.createElement("button");
+    this.winPrev.addEventListener("click", this.prevWinClick);
+    this.winPrev.className = "pagination__prev";
+    this.winPrev.innerHTML = "PREV";
+    if (this.winnersPageCount > 1) {
+      this.winPrev.style.background = "aquamarine";
+      this.winPrev.addEventListener("click", this.prevClick);
+    } else {
+      this.winPrev.style.background = "none";
+      this.winPrev.removeEventListener("click", this.prevClick);
+    }
+    this.winNext = document.createElement("button");
+    this.winNext.addEventListener("click", this.nextWinClick);
+    this.winNext.className = "pagination__next";
+    this.winNext.innerHTML = "NEXT";
+    const winners = await this.controller.handleGetWinnersOnPage(
+      this.winnersPageCount + 1
+    );
+    if (winners.length > 0) {
+      this.winNext.style.background = "aquamarine";
+      this.winNext.addEventListener("click", this.nextClick);
+    } else {
+      this.winNext.style.background = "none";
+      this.winNext.removeEventListener("click", this.nextClick);
+    }
+    this.winnersPagination.append(this.winPrev, this.winNext);
+  }
+
+  private prevWinClick = async () => {
+    if (this.winnersPageCount > 1) {
+      this.winnersPageCount -= 1;
+      await this.updateWinners();
+      this.updatePuginationWinners();
+    }
+  };
+
+  private nextWinClick = async () => {
+    const winners = await this.controller.handleGetWinnersOnPage(
+      this.winnersPageCount + 1
+    );
+    if (winners.length > 0) {
+      this.winnersPageCount += 1;
+      await this.updateWinners();
+      this.updatePuginationWinners();
+    }
+  };
+
   private createWinners = async () => {
     this.winners = document.createElement("div");
+    if (this.isGaragePage === true) {
+      this.winners.style.display = "none";
+    } else {
+      this.winners.style.display = "flex";
+    }
     this.winners.className = "main__winners winners";
-    this.winners.style.display = "none";
-    const winners = await this.controller.handleGetWinners();
+    const allWinners = await this.controller.handleGetWinners();
+    let winners = await this.controller.handleGetWinnersOnPage(
+      this.winnersPageCount
+    );
+
+    if (winners.length === 0 && this.winnersPageCount > 1) {
+      this.winnersPageCount -= 1;
+      winners = await this.controller.handleGetWinnersOnPage(
+        this.winnersPageCount
+      );
+    }
+
     const cars = await this.controller.handleGetCars();
+
+    const winnersTitle = document.createElement("p");
+    winnersTitle.className = "winners__title";
+    winnersTitle.innerHTML = `Winners(${allWinners.length})`;
+
+    const winnersPageCount = document.createElement("p");
+    winnersPageCount.className = "winners__count";
+    winnersPageCount.innerHTML = `Page: ${this.winnersPageCount}`;
 
     const table = document.createElement("table");
     const tableHead = document.createElement("thead");
@@ -747,10 +835,6 @@ export class CarsView {
       for (let j = 0; j < cars.length; j += 1) {
         const car = cars[j];
         if (winner.id === Number(car.id)) {
-          console.log("----------");
-          console.log(winner);
-          console.log(car);
-          console.log("----------");
           const bodyRow = document.createElement("tr");
           const bodyCell1 = document.createElement("th");
           bodyCell1.innerHTML = `${i + 1}`;
@@ -778,15 +862,25 @@ export class CarsView {
     headRow.append(headCell1, headCell2, headCell3, headCell4, headCell5);
     tableHead.appendChild(headRow);
     table.append(tableHead, tableBody);
-    this.winners.appendChild(table);
-    console.log(winners);
+    await this.createPuginationWinners();
+    this.winners.append(
+      winnersTitle,
+      winnersPageCount,
+      table,
+      this.winnersPagination
+    );
   };
 
   private updateWinners = async () => {
     this.main.removeChild(this.winners);
     await this.createWinners();
     this.main.appendChild(this.winners);
-    console.log("wupdate winers");
+  };
+
+  private updatePuginationWinners = async () => {
+    this.winners.removeChild(this.winnersPagination);
+    await this.createPuginationWinners();
+    this.winners.appendChild(this.winnersPagination);
   };
 
   public mount = async () => {

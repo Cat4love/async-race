@@ -164,6 +164,16 @@ main {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
+  gap: 10px;
+
+  &__title {
+    font-size: 20px;
+    margin: 0px 0px;
+  }
+  &__count{
+    font-size: 18px;
+    margin: 0px;
+  }
 }
 
 table {
@@ -178,4 +188,9 @@ th, td {
 
 button:hover {
   cursor: pointer;
+}
+
+.pagination {
+  display: flex;
+  gap: 5px;
 }

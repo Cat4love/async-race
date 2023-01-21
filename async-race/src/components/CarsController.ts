@@ -75,6 +75,10 @@ export class CarsController {
     return this.model.getWinners();
   }
 
+  public async handleGetWinnersOnPage(page: number) {
+    return this.model.getWinnerssOnPage(page);
+  }
+
   public async handleGetWinner(id: string) {
     return this.model.getWinner(id);
   }

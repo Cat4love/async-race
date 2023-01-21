@@ -145,6 +145,18 @@ export class CarsModel {
     return data;
   }
 
+  async getWinnerssOnPage(page: number): Promise<IWinner[]> {
+    const response = await fetch(
+      `http://localhost:3000/winners?_page=${page}&_limit=10`
+    );
+    if (!response.ok) {
+      const message = `An error has occured: ${response.status}`;
+      throw new Error(message);
+    }
+    const data: Array<IWinner> = await response.json();
+    return data;
+  }
+
   async getWinner(id: string): Promise<IWinner> {
     console.log(id);
     const response = await fetch(`http://localhost:3000/winners/${id}`);
