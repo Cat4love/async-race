@@ -1,12 +1,22 @@
 import { CarsController } from "./CarsController";
 import "../index.scss";
 
+interface IResult {
+  id: string;
+  carName: string | null | undefined;
+  duration: number;
+}
+
 export class CarsView {
   controller: CarsController;
 
   root: HTMLElement;
 
   private main!: HTMLElement;
+
+  private navigation!: HTMLButtonElement;
+
+  private winners!: HTMLDivElement;
 
   private form!: HTMLFormElement;
 
@@ -40,7 +50,7 @@ export class CarsView {
 
   private firstRace = false;
 
-  private raceMode!: boolean;
+  private raceMode = false;
 
   private driveCount = 0;
 
@@ -72,12 +82,13 @@ export class CarsView {
         this.inputColor instanceof HTMLInputElement
       ) {
         const create = await this.controller.handleCreateCar(
-          (this.inputName.value = "Auto"),
+          this.inputName.value,
           this.inputColor.value
         );
-        await this.updateGarage();
+        await this.updateBoxes();
         await this.updatePuginationButtons();
         this.inputName.value = "";
+        this.inputColor.value = "#000000";
         console.log("create:", create);
       }
     }
@@ -95,10 +106,10 @@ export class CarsView {
           this.updateColor.value,
           this.selectCardId
         );
-        await this.updateGarage();
+        await this.updateBoxes();
         this.updateCar.style.background = "none";
         this.updateName.value = "";
-        this.updateColor.value = "#0000000";
+        this.updateColor.value = "#000000";
         this.selectCardId = null;
         console.log("update:", update);
       }
@@ -130,8 +141,9 @@ export class CarsView {
       }
       if (id !== null) {
         await this.controller.handleRemoveCar(id);
+        await this.eraseWhinner(id);
       }
-      await this.updateGarage();
+      await this.updateBoxes();
       await this.updatePuginationButtons();
     }
   };
@@ -143,7 +155,7 @@ export class CarsView {
 
     let target = null;
     let sibling = null;
-    let result = null;
+    let result: IResult | Promise<never> | null = null;
 
     if (id !== null) {
       const startButtons = document.querySelectorAll(".box__start");
@@ -179,7 +191,7 @@ export class CarsView {
             console.log(id, "сломался");
           } else {
             console.log(id, "финишировал");
-            result = [id, carName, duration];
+            result = { id, carName, duration };
           }
           if (!this.raceMode && sibling !== null) {
             sibling.style.background = "red";
@@ -253,6 +265,7 @@ export class CarsView {
   private raceClick = async () => {
     this.raceMode = true;
     this.firstRace = true;
+    this.race.style.background = "none";
     const cars = await this.controller.handleGetCarsOnPage(this.pageCount);
     const carId = cars.map((car) => car.id);
     const promises = carId.map(async (car) => {
@@ -263,12 +276,13 @@ export class CarsView {
       const winner = await Promise.any(promises).then((value) => {
         return value;
       });
-      if (winner !== null) {
-        this.winner.innerHTML = `"${winner[1]} went first ${(
-          Number(winner[2]) / 1000
+      if (winner !== null && winner !== undefined) {
+        this.winner.innerHTML = `"${winner?.carName} went first ${(
+          Number(winner?.duration) / 1000
         ).toFixed(2)}s"`;
         this.winner.style.color = "green";
         this.winner.style.display = "block";
+        this.writeWinner(winner);
       }
     } catch (error) {
       this.winner.style.color = "red";
@@ -278,12 +292,63 @@ export class CarsView {
 
     await Promise.allSettled(promises).then((results) => results);
     console.log("ЗАЕЗД ОКОНЧЕН");
-    this.race.style.background = "none";
+
     this.reset.style.background = "green";
     this.reset.addEventListener("click", this.resetClick, { once: true });
   };
 
-  resetClick = async () => {
+  private writeWinner = async (winner: IResult) => {
+    try {
+      const winners = await this.controller.handleGetWinners();
+      const winnersId = winners.map((x) => x.id);
+
+      if (!winnersId.includes(Number(winner.id))) {
+        const create = await this.controller.handleCreateWinner(
+          winner.id,
+          1,
+          Number((Number(winner.duration) / 1000).toFixed(2))
+        );
+        console.log(create);
+        this.updateWinners();
+      } else {
+        const winnerScore = await this.controller.handleGetWinner(winner.id);
+        let writeTime = winnerScore.time;
+        let writeWins = winnerScore.wins;
+        const writeId = winnerScore.id;
+
+        if (
+          Number((Number(winner.duration) / 1000).toFixed(2)) <
+          Number(winnerScore.time)
+        ) {
+          console.log("время обновлено");
+          writeTime = Number((Number(winner.duration) / 1000).toFixed(2));
+        }
+
+        writeWins += 1;
+
+        const update = await this.controller.handleUpdateWinner(
+          String(writeId),
+          writeWins,
+          writeTime
+        );
+        console.log(update);
+        this.updateWinners();
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  private eraseWhinner = async (id: string) => {
+    const winners = await this.controller.handleGetWinners();
+    const winnersId = winners.map((x) => x.id);
+    if (winnersId.includes(Number(id))) {
+      await this.controller.handleEraseWinner(id);
+      this.updateWinners();
+    }
+  };
+
+  private resetClick = async () => {
     const cars = await this.controller.handleGetCarsOnPage(this.pageCount);
     const carId = cars.map((car) => car.id);
     const promises = carId.map(async (car) => {
@@ -304,7 +369,7 @@ export class CarsView {
     }
     // await this.resetClick();
     this.driveCount = 0;
-    this.updateGarage();
+    this.updateBoxes();
     this.updatePuginationButtons();
   };
 
@@ -315,7 +380,7 @@ export class CarsView {
     }
     // await this.resetClick();
     this.driveCount = 0;
-    this.updateGarage();
+    this.updateBoxes();
     this.updatePuginationButtons();
   };
 
@@ -348,6 +413,9 @@ export class CarsView {
       this.generateCars.style.background = "none";
       // this.generateCars.removeEventListener("click", this.generateCarsClick);
 
+      this.navigation.removeEventListener("click", this.switchPage);
+      this.navigation.style.background = "none";
+
       for (let i = 0; i < selectButtons.length; i += 1) {
         const select = selectButtons[i] as HTMLButtonElement;
         select.removeEventListener("click", this.selectCarClick);
@@ -368,6 +436,9 @@ export class CarsView {
 
       this.generateCars.style.background = "aquamarine";
       // this.generateCars.addEventListener("click", this.generateCarsClick);
+
+      this.navigation.addEventListener("click", this.switchPage);
+      this.navigation.style.background = "aquamarine";
 
       if (this.selectCardId !== null && this.selectCardId !== undefined) {
         console.log("ok");
@@ -533,10 +604,10 @@ export class CarsView {
       const boxButtons = document.createElement("div");
       boxButtons.className = "box__buttons";
       boxButtons.append(
-        this.selectCar,
-        this.removeCar,
         this.startEngine,
-        this.stopEngine
+        this.stopEngine,
+        this.selectCar,
+        this.removeCar
       );
 
       const boxName = document.createElement("p");
@@ -608,25 +679,122 @@ export class CarsView {
     // this.garage.appendChild(this.pagination);
   };
 
-  public async updateGarage() {
+  private async updateBoxes() {
     this.garage.removeChild(this.boxes);
     await this.createBoxes();
     this.garage.insertBefore(this.boxes, this.pagination);
   }
 
-  public mount = async () => {
+  private createGarage = async () => {
     this.winner = document.createElement("p");
     this.winner.innerHTML = "WINNER";
     this.winner.className = "garage__winner winner";
-    this.raceMode = false;
     this.createForm();
     await this.createBoxes();
     this.createPuginationButtons();
-    this.main = document.createElement("main");
     this.garage = document.createElement("div");
-    this.garage.className = "garage";
+    this.garage.className = "main__garage garage";
+    this.garage.style.display = "flex";
     this.garage.append(this.form, this.boxes, this.pagination, this.winner);
-    this.main.appendChild(this.garage);
+  };
+
+  private createNavigationButton = () => {
+    this.navigation = document.createElement("button");
+    this.navigation.className = "main__navigation navigation";
+    this.navigation.style.background = "aquamarine";
+    this.navigation.innerHTML = "TO WINNERS";
+    this.navigation.addEventListener("click", this.switchPage);
+  };
+
+  private switchPage = () => {
+    if (this.garage.style.display !== "flex") {
+      this.navigation.innerHTML = "TO WINNERS";
+      this.garage.style.display = "flex";
+      this.winners.style.display = "none";
+      window.location.href = "#garage";
+    } else if (this.garage.style.display === "flex") {
+      this.navigation.innerHTML = "TO GARAGE";
+      this.garage.style.display = "none";
+      this.winners.style.display = "flex";
+      window.location.href = "#winners";
+    }
+  };
+
+  private createWinners = async () => {
+    this.winners = document.createElement("div");
+    this.winners.className = "main__winners winners";
+    this.winners.style.display = "none";
+    const winners = await this.controller.handleGetWinners();
+    const cars = await this.controller.handleGetCars();
+
+    const table = document.createElement("table");
+    const tableHead = document.createElement("thead");
+    const tableBody = document.createElement("tbody");
+    const headRow = document.createElement("tr");
+    const headCell1 = document.createElement("th");
+    headCell1.innerHTML = "Number";
+    const headCell2 = document.createElement("th");
+    headCell2.innerHTML = "Car";
+    const headCell3 = document.createElement("th");
+    headCell3.innerHTML = "Name";
+    const headCell4 = document.createElement("th");
+    headCell4.innerHTML = "Wins";
+    const headCell5 = document.createElement("th");
+    headCell5.innerHTML = "Best time";
+
+    for (let i = 0; i < winners.length; i += 1) {
+      const winner = winners[i];
+      for (let j = 0; j < cars.length; j += 1) {
+        const car = cars[j];
+        if (winner.id === Number(car.id)) {
+          console.log("----------");
+          console.log(winner);
+          console.log(car);
+          console.log("----------");
+          const bodyRow = document.createElement("tr");
+          const bodyCell1 = document.createElement("th");
+          bodyCell1.innerHTML = `${i + 1}`;
+          const bodyCell2 = document.createElement("th");
+          const carImage = document.createElement("div");
+          carImage.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Pro 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) 
+          Copyright 2022 Fonticons, Inc. --><path d="M171.3 96H224v96H111.3l30.4-75.9C146.5 104 158.2 96 171.3 96zM272 192V96h81.2c9.7 0 18.9 4.4 25 12l67.2 84H272zm256.2 1L428.2 68c-18.2-22.8-45.8-36-75-36H171.3c-39.3 0-74.6 
+          23.9-89.1 60.3L40.6 196.4C16.8 205.8 0 228.9 0 256V368c0 17.7 14.3 32 32 32H65.3c7.6 45.4 47.1 80 94.7 80s87.1-34.6 94.7-80H385.3c7.6 45.4 47.1 80 94.7 80s87.1-34.6 94.7-80H608c17.7 0 32-14.3 32-32V320c0-65.2-48.8-119-111.8-127zm-2.9 
+          207c-6.6 18.6-24.4 32-45.3 32s-38.7-13.4-45.3-32c-1.8-5-2.7-10.4-2.7-16c0-26.5 21.5-48 48-48s48 21.5 48 48c0 5.6-1 11-2.7 16zM160 432c-20.9 0-38.7-13.4-45.3-32c-1.8-5-2.7-10.4-2.7-16c0-26.5 21.5-48 48-48s48 21.5 48 48c0 5.6-1 11-2.7 
+          16c-6.6 18.6-24.4 32-45.3 32z"/></svg>`;
+          carImage.style.fill = car.color;
+          bodyCell2.append(carImage);
+          const bodyCell3 = document.createElement("th");
+          bodyCell3.innerHTML = `${car.name}`;
+          const bodyCell4 = document.createElement("th");
+          bodyCell4.innerHTML = `${winner.wins}`;
+          const bodyCell5 = document.createElement("th");
+          bodyCell5.innerHTML = `${winner.time}`;
+          bodyRow.append(bodyCell1, bodyCell2, bodyCell3, bodyCell4, bodyCell5);
+          tableBody.append(bodyRow);
+        }
+      }
+    }
+
+    headRow.append(headCell1, headCell2, headCell3, headCell4, headCell5);
+    tableHead.appendChild(headRow);
+    table.append(tableHead, tableBody);
+    this.winners.appendChild(table);
+    console.log(winners);
+  };
+
+  private updateWinners = async () => {
+    this.main.removeChild(this.winners);
+    await this.createWinners();
+    this.main.appendChild(this.winners);
+    console.log("wupdate winers");
+  };
+
+  public mount = async () => {
+    this.main = document.createElement("main");
+    await this.createGarage();
+    await this.createWinners();
+    this.createNavigationButton();
+    this.main.append(this.navigation, this.garage, this.winners);
     this.root.appendChild(this.main);
   };
 }

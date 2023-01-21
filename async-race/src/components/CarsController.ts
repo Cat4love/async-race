@@ -70,4 +70,24 @@ export class CarsController {
     }
     return this.model.driveEngine(id);
   }
+
+  public async handleGetWinners() {
+    return this.model.getWinners();
+  }
+
+  public async handleGetWinner(id: string) {
+    return this.model.getWinner(id);
+  }
+
+  public async handleCreateWinner(id: string, wins: number, time: number) {
+    return this.model.createWinner(id, wins, time);
+  }
+
+  public async handleUpdateWinner(id: string, wins: number, time: number) {
+    return this.model.updateWinner(id, wins, time);
+  }
+
+  public async handleEraseWinner(id: string) {
+    return this.model.eraseWinner(id);
+  }
 }

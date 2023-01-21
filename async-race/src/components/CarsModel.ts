@@ -3,6 +3,11 @@ interface ICar {
   color: string;
   id: string;
 }
+interface IWinner {
+  id: number;
+  wins: number;
+  time: number;
+}
 
 interface IEngine {
   velocity: string;
@@ -127,6 +132,77 @@ export class CarsModel {
     } else {
       const data: IDriveEngine = await response.json();
       return data;
+    }
+  }
+
+  async getWinners(): Promise<IWinner[]> {
+    const response = await fetch(`http://localhost:3000/winners`);
+    if (!response.ok) {
+      const message = `An error has occured: ${response.status}`;
+      throw new Error(message);
+    }
+    const data: Array<IWinner> = await response.json();
+    return data;
+  }
+
+  async getWinner(id: string): Promise<IWinner> {
+    console.log(id);
+    const response = await fetch(`http://localhost:3000/winners/${id}`);
+    if (!response.ok) {
+      const message = `An error has occured: ${response.status}`;
+      throw new Error(message);
+    }
+    const data: IWinner = await response.json();
+    return data;
+  }
+
+  async createWinner(id: string, wins: number, time: number) {
+    const response = await fetch("http://localhost:3000/winners", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id, wins, time }),
+    });
+
+    if (!response.ok) {
+      const message = `An error has occured: ${response.status}`;
+      throw new Error(message);
+    }
+    const data: Array<IWinner> = await response.json();
+    console.log(`Победитель создан ${JSON.stringify(data)}`);
+    return data;
+  }
+
+  async updateWinner(id: string, wins: number, time: number) {
+    const response = await fetch(`http://localhost:3000/winners/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ wins, time }),
+    });
+
+    if (!response.ok) {
+      const message = `An error has occured: ${response.status}`;
+      throw new Error(message);
+    }
+    const data: Array<IWinner> = await response.json();
+    console.log(`Победитель обновлен ${JSON.stringify(data)}`);
+    return data;
+  }
+
+  async eraseWinner(id: string) {
+    const response = await fetch(`http://localhost:3000/winners/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const message = `An error has occured: ${response.status}`;
+      throw new Error(message);
     }
   }
 }

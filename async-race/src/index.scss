@@ -28,8 +28,8 @@ main {
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  // align-items: center;
+  // justify-content: center;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -116,7 +116,7 @@ main {
   }
   &__buttons{
     display: flex;
-    gap: 2px;
+    gap: 5px;
   }
 }
 
@@ -145,3 +145,37 @@ main {
   }
 }
 
+.navigation {
+  width: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  &__garage{}
+  &__winners{}
+}
+
+.winners {
+  // width: 500px;
+  // height: 500px;
+  // background-color: aquamarine;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+th, td {
+  padding: 10px 20px;
+  border: 2px solid black;
+}
+
+button:hover {
+  cursor: pointer;
+}
