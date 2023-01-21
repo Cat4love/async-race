@@ -38,7 +38,11 @@ export class CarsView {
 
   private race!: HTMLButtonElement;
 
+  private firstRace = false;
+
   private raceMode!: boolean;
+
+  private driveCount = 0;
 
   private reset!: HTMLButtonElement;
 
@@ -133,6 +137,10 @@ export class CarsView {
   };
 
   private startEngineClick = async (id: string) => {
+    console.log(id, "start");
+    this.driveCount += 1;
+    this.driveSwitch();
+
     let target = null;
     let sibling = null;
     let result = null;
@@ -165,7 +173,9 @@ export class CarsView {
 
           if (!drive.success) {
             car.style.animationPlayState = "paused";
-            result = Promise.reject(new Error(`${carName}: сломался`));
+            if (this.raceMode) {
+              result = Promise.reject();
+            }
             console.log(id, "сломался");
           } else {
             console.log(id, "финишировал");
@@ -193,7 +203,7 @@ export class CarsView {
 
   private stopEngineClick = async (id: string) => {
     let target = null;
-    let sibling = null;
+    let sibling: HTMLButtonElement | null = null;
 
     await this.controller.handleSwitchEngine(id, "stopped");
     if (id !== null) {
@@ -214,23 +224,35 @@ export class CarsView {
         }
       }
 
-      if (sibling !== null) {
+      if (sibling !== null && !sibling.getAttribute("data-listener")) {
+        sibling?.setAttribute("data-listener", "true");
+        console.log(id, "слушатель повешан");
         sibling.addEventListener(
           "click",
           () => {
-            this.startEngineClick(id);
+            if (this.raceMode) {
+              sibling?.removeAttribute("data-listener");
+            } else {
+              sibling?.removeAttribute("data-listener");
+              this.startEngineClick(id);
+            }
           },
           { once: true }
         );
+      }
+      if (sibling !== null) {
         sibling.style.background = "green";
       }
 
       console.log("stop", id);
+      this.driveCount -= 1;
+      this.driveSwitch();
     }
   };
 
   private raceClick = async () => {
-    this.raceSwitch(true);
+    this.raceMode = true;
+    this.firstRace = true;
     const cars = await this.controller.handleGetCarsOnPage(this.pageCount);
     const carId = cars.map((car) => car.id);
     const promises = carId.map(async (car) => {
@@ -256,13 +278,12 @@ export class CarsView {
 
     await Promise.allSettled(promises).then((results) => results);
     console.log("ЗАЕЗД ОКОНЧЕН");
+    this.race.style.background = "none";
     this.reset.style.background = "green";
     this.reset.addEventListener("click", this.resetClick, { once: true });
   };
 
   resetClick = async () => {
-    this.raceSwitch(false);
-
     const cars = await this.controller.handleGetCarsOnPage(this.pageCount);
     const carId = cars.map((car) => car.id);
     const promises = carId.map(async (car) => {
@@ -270,15 +291,19 @@ export class CarsView {
       return stop;
     });
     await Promise.all(promises);
+    this.winner.style.display = "none";
+    this.reset.style.background = "none";
     this.race.style.background = "green";
     this.race.addEventListener("click", this.raceClick, { once: true });
+    this.raceMode = false;
   };
 
-  private prevClick = () => {
+  private prevClick = async () => {
     if (this.pageCount > 1) {
       this.pageCount -= 1;
     }
-    this.resetClick();
+    // await this.resetClick();
+    this.driveCount = 0;
     this.updateGarage();
     this.updatePuginationButtons();
   };
@@ -288,53 +313,75 @@ export class CarsView {
     if (cars.length > 0) {
       this.pageCount += 1;
     }
-    this.resetClick();
+    // await this.resetClick();
+    this.driveCount = 0;
     this.updateGarage();
     this.updatePuginationButtons();
   };
 
-  raceSwitch = (flag: boolean) => {
+  private driveSwitch = async () => {
+    console.log("активные машины", this.driveCount);
     const selectButtonsCollection =
       document.getElementsByClassName("box__select");
     const selectButtons = [...selectButtonsCollection];
+
     const removeButtonsCollection =
       document.getElementsByClassName("box__remove");
     const removeButtons = [...removeButtonsCollection];
-    if (flag) {
-      this.raceMode = true;
+
+    if (this.driveCount > 0) {
       this.race.style.background = "none";
+      this.race.removeEventListener("click", this.raceClick);
+
       this.prev.style.background = "none";
-      this.next.style.background = "none";
       this.next.removeEventListener("click", this.nextClick);
+
+      this.next.style.background = "none";
       this.prev.removeEventListener("click", this.prevClick);
+
       this.createCar.style.background = "none";
+      this.createCar.removeEventListener("click", this.createCarClick);
+
       this.updateCar.style.background = "none";
+      this.updateCar.removeEventListener("click", this.updateCarClick);
+
       this.generateCars.style.background = "none";
+      // this.generateCars.removeEventListener("click", this.generateCarsClick);
+
       for (let i = 0; i < selectButtons.length; i += 1) {
         const select = selectButtons[i] as HTMLButtonElement;
+        select.removeEventListener("click", this.selectCarClick);
         select.style.background = "none";
         const remove = removeButtons[i] as HTMLButtonElement;
+        remove.removeEventListener("click", this.removeCarClick);
         remove.style.background = "none";
       }
     } else {
-      this.raceMode = false;
-      this.reset.style.background = "none";
-      this.winner.style.display = "none";
-      this.next.addEventListener("click", this.nextClick);
-      this.prev.addEventListener("click", this.prevClick);
-      this.updatePuginationButtons();
+      this.race.style.background = "green";
+      this.race.addEventListener("click", this.raceClick);
+
       this.createCar.style.background = "aquamarine";
+      this.createCar.addEventListener("click", this.createCarClick);
+
+      this.updateCar.style.background = "aquamarine";
+      this.updateCar.addEventListener("click", this.updateCarClick);
+
       this.generateCars.style.background = "aquamarine";
+      // this.generateCars.addEventListener("click", this.generateCarsClick);
+
       if (this.selectCardId !== null && this.selectCardId !== undefined) {
         console.log("ok");
         this.updateCar.style.background = "aquamarine";
       }
       for (let i = 0; i < selectButtons.length; i += 1) {
         const select = selectButtons[i] as HTMLButtonElement;
+        select.addEventListener("click", this.selectCarClick);
         select.style.background = "aquamarine";
         const remove = removeButtons[i] as HTMLButtonElement;
+        remove.addEventListener("click", this.removeCarClick);
         remove.style.background = "aquamarine";
       }
+      await this.updatePuginationButtons();
     }
   };
 
@@ -465,8 +512,13 @@ export class CarsView {
         (event: Event) => {
           const target = event.target as HTMLButtonElement;
           const id = target.getAttribute("data-id");
-          if (id !== null && this.raceMode === false) {
+          if (
+            id !== null &&
+            this.raceMode === false &&
+            this.firstRace === false
+          ) {
             this.startEngineClick(id);
+            console.log("первый слушатель");
           }
         },
         { once: true }
@@ -495,14 +547,23 @@ export class CarsView {
       this.car.id = `car${car.id}`;
       this.car.setAttribute("data-name", car.name);
       this.car.className = "box__car car";
-      this.car.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Pro 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M171.3 96H224v96H111.3l30.4-75.9C146.5 104 158.2 96 171.3 96zM272 192V96h81.2c9.7 0 18.9 4.4 25 12l67.2 84H272zm256.2 1L428.2 68c-18.2-22.8-45.8-36-75-36H171.3c-39.3 0-74.6 23.9-89.1 60.3L40.6 196.4C16.8 205.8 0 228.9 0 256V368c0 17.7 14.3 32 32 32H65.3c7.6 45.4 47.1 80 94.7 80s87.1-34.6 94.7-80H385.3c7.6 45.4 47.1 80 94.7 80s87.1-34.6 94.7-80H608c17.7 0 32-14.3 32-32V320c0-65.2-48.8-119-111.8-127zm-2.9 207c-6.6 18.6-24.4 32-45.3 32s-38.7-13.4-45.3-32c-1.8-5-2.7-10.4-2.7-16c0-26.5 21.5-48 48-48s48 21.5 48 48c0 5.6-1 11-2.7 16zM160 432c-20.9 0-38.7-13.4-45.3-32c-1.8-5-2.7-10.4-2.7-16c0-26.5 21.5-48 48-48s48 21.5 48 48c0 5.6-1 11-2.7 16c-6.6 18.6-24.4 32-45.3 32z"/></svg>`;
+      this.car.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Pro 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) 
+      Copyright 2022 Fonticons, Inc. --><path d="M171.3 96H224v96H111.3l30.4-75.9C146.5 104 158.2 96 171.3 96zM272 192V96h81.2c9.7 0 18.9 4.4 25 12l67.2 84H272zm256.2 1L428.2 68c-18.2-22.8-45.8-36-75-36H171.3c-39.3 0-74.6 
+      23.9-89.1 60.3L40.6 196.4C16.8 205.8 0 228.9 0 256V368c0 17.7 14.3 32 32 32H65.3c7.6 45.4 47.1 80 94.7 80s87.1-34.6 94.7-80H385.3c7.6 45.4 47.1 80 94.7 80s87.1-34.6 94.7-80H608c17.7 0 32-14.3 32-32V320c0-65.2-48.8-119-111.8-127zm-2.9 
+      207c-6.6 18.6-24.4 32-45.3 32s-38.7-13.4-45.3-32c-1.8-5-2.7-10.4-2.7-16c0-26.5 21.5-48 48-48s48 21.5 48 48c0 5.6-1 11-2.7 16zM160 432c-20.9 0-38.7-13.4-45.3-32c-1.8-5-2.7-10.4-2.7-16c0-26.5 21.5-48 48-48s48 21.5 48 48c0 5.6-1 11-2.7 
+      16c-6.6 18.6-24.4 32-45.3 32z"/></svg>`;
+
       this.car.style.fill = car.color;
 
       const road = document.createElement("div");
       road.className = "box__road";
 
       const flag = document.createElement("div");
-      flag.innerHTML = `<svg width="50px" height="50px" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <title>flag-racing-solid</title> <g id="Layer_2" data-name="Layer 2"> <g id="invisible_box" data-name="invisible box"> <rect width="48" height="48" fill="none"></rect> </g> <g id="icons_Q2" data-name="icons Q2"> <g> <path d="M26,6V4a2,2,0,0,0-2-2H6V44a2,2,0,0,0,4,0V26H22v2a2,2,0,0,0,2,2H42V6ZM38,18H34v4h4v4H34V22H30v4H26V22H22V18H18v4H14V18H10V14h4V10H10V6h4v4h4V6h4v4h4v4h4V10h4v4h4Z"></path> <rect x="14" y="14" width="4" height="4"></rect> <rect x="18" y="10" width="4" height="4"></rect> <rect x="22" y="14" width="4" height="4"></rect> <rect x="26" y="18" width="4" height="4"></rect> <rect x="30" y="14" width="4" height="4"></rect> </g> </g> </g> </g></svg>`;
+      flag.innerHTML = `<svg width="50px" height="50px" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+      stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <title>flag-racing-solid</title> <g id="Layer_2" data-name="Layer 2"> <g id="invisible_box" data-name="invisible box"> <rect width="48" height="48" fill="none"></rect> 
+      </g> <g id="icons_Q2" data-name="icons Q2"> <g> <path d="M26,6V4a2,2,0,0,0-2-2H6V44a2,2,0,0,0,4,0V26H22v2a2,2,0,0,0,2,2H42V6ZM38,18H34v4h4v4H34V22H30v4H26V22H22V18H18v4H14V18H10V14h4V10H10V6h4v4h4V6h4v4h4v4h4V10h4v4h4Z"></path>
+      <rect x="14" y="14" width="4" height="4"></rect> <rect x="18" y="10" width="4" height="4"></rect> <rect x="22" y="14" width="4" height="4"></rect> <rect x="26" y="18" width="4" height="4"></rect> <rect x="30" y="14" width="4" 
+      height="4"></rect> </g> </g> </g> </g></svg>`;
       flag.className = "box__flag";
 
       road.append(flag);
@@ -540,11 +601,12 @@ export class CarsView {
     this.pagination.append(this.prev, this.next);
   }
 
-  private async updatePuginationButtons() {
+  private updatePuginationButtons = async () => {
     this.garage.removeChild(this.pagination);
     await this.createPuginationButtons();
     this.garage.appendChild(this.pagination);
-  }
+    // this.garage.appendChild(this.pagination);
+  };
 
   public async updateGarage() {
     this.garage.removeChild(this.boxes);
