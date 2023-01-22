@@ -76,7 +76,15 @@ export class CarsView {
 
   private pageCount = 1;
 
+  private winnersSortFlag = "";
+
+  private winnersOrderFlag = "";
+
   private winnersPageCount = 1;
+
+  private winsCell!: HTMLTableCellElement;
+
+  private timeCell!: HTMLTableCellElement;
 
   private isGaragePage = true;
 
@@ -795,13 +803,17 @@ export class CarsView {
     this.winners.className = "main__winners winners";
     const allWinners = await this.controller.handleGetWinners();
     let winners = await this.controller.handleGetWinnersOnPage(
-      this.winnersPageCount
+      this.winnersPageCount,
+      this.winnersSortFlag,
+      this.winnersOrderFlag
     );
 
     if (winners.length === 0 && this.winnersPageCount > 1) {
       this.winnersPageCount -= 1;
       winners = await this.controller.handleGetWinnersOnPage(
-        this.winnersPageCount
+        this.winnersPageCount,
+        this.winnersSortFlag,
+        this.winnersOrderFlag
       );
     }
 
@@ -825,10 +837,47 @@ export class CarsView {
     headCell2.innerHTML = "Car";
     const headCell3 = document.createElement("th");
     headCell3.innerHTML = "Name";
-    const headCell4 = document.createElement("th");
-    headCell4.innerHTML = "Wins";
-    const headCell5 = document.createElement("th");
-    headCell5.innerHTML = "Best time";
+    this.winsCell = document.createElement("th");
+    this.winsCell.style.background = "aquamarine";
+    if (this.winnersOrderFlag === "" || this.winnersSortFlag === "time") {
+      this.winsCell.innerHTML = "Wins";
+    } else if (this.winnersOrderFlag === "ASC") {
+      this.winsCell.innerHTML = "Wins↑";
+    } else if (this.winnersOrderFlag === "DESC") {
+      this.winsCell.innerHTML = "Wins↓";
+    }
+    this.winsCell.addEventListener("click", () => {
+      this.winnersSortFlag = "wins";
+      if (this.winnersOrderFlag === "") {
+        this.winnersOrderFlag = "ASC";
+      } else if (this.winnersOrderFlag === "ASC") {
+        this.winnersOrderFlag = "DESC";
+      } else if (this.winnersOrderFlag === "DESC") {
+        this.winnersOrderFlag = "ASC";
+      }
+      this.updateWinners();
+    });
+
+    this.timeCell = document.createElement("th");
+    this.timeCell.style.background = "aquamarine";
+    if (this.winnersOrderFlag === "" || this.winnersSortFlag === "wins") {
+      this.timeCell.innerHTML = "Best time";
+    } else if (this.winnersOrderFlag === "ASC") {
+      this.timeCell.innerHTML = "Best time↑";
+    } else if (this.winnersOrderFlag === "DESC") {
+      this.timeCell.innerHTML = "Best time↓";
+    }
+    this.timeCell.addEventListener("click", () => {
+      this.winnersSortFlag = "time";
+      if (this.winnersOrderFlag === "") {
+        this.winnersOrderFlag = "ASC";
+      } else if (this.winnersOrderFlag === "ASC") {
+        this.winnersOrderFlag = "DESC";
+      } else if (this.winnersOrderFlag === "DESC") {
+        this.winnersOrderFlag = "ASC";
+      }
+      this.updateWinners();
+    });
 
     for (let i = 0; i < winners.length; i += 1) {
       const winner = winners[i];
@@ -852,14 +901,20 @@ export class CarsView {
           const bodyCell4 = document.createElement("th");
           bodyCell4.innerHTML = `${winner.wins}`;
           const bodyCell5 = document.createElement("th");
-          bodyCell5.innerHTML = `${winner.time}`;
+          bodyCell5.innerHTML = `${winner.time} sec`;
           bodyRow.append(bodyCell1, bodyCell2, bodyCell3, bodyCell4, bodyCell5);
           tableBody.append(bodyRow);
         }
       }
     }
 
-    headRow.append(headCell1, headCell2, headCell3, headCell4, headCell5);
+    headRow.append(
+      headCell1,
+      headCell2,
+      headCell3,
+      this.winsCell,
+      this.timeCell
+    );
     tableHead.appendChild(headRow);
     table.append(tableHead, tableBody);
     await this.createPuginationWinners();

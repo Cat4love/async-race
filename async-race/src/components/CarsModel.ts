@@ -145,9 +145,13 @@ export class CarsModel {
     return data;
   }
 
-  async getWinnerssOnPage(page: number): Promise<IWinner[]> {
+  async getWinnerssOnPage(
+    page: number,
+    sort?: string,
+    order?: string
+  ): Promise<IWinner[]> {
     const response = await fetch(
-      `http://localhost:3000/winners?_page=${page}&_limit=10`
+      `http://localhost:3000/winners?_page=${page}&_limit=10&_sort=${sort}&_order=${order}`
     );
     if (!response.ok) {
       const message = `An error has occured: ${response.status}`;
