@@ -20,17 +20,17 @@ export class CarsView {
 
   private form!: HTMLFormElement;
 
-  private inputName!: HTMLInputElement;
+  private inputName: HTMLInputElement = document.createElement("input");
 
-  private inputColor!: HTMLInputElement;
+  private inputColor: HTMLInputElement = document.createElement("input");
 
   private createCar!: HTMLButtonElement;
 
-  private updateName!: HTMLInputElement;
+  private updateName: HTMLInputElement = document.createElement("input");
 
-  private updateColor!: HTMLInputElement;
+  private updateColor: HTMLInputElement = document.createElement("input");
 
-  private updateCar!: HTMLButtonElement;
+  private updateCar: HTMLButtonElement = document.createElement("button");
 
   private garage!: HTMLDivElement;
 
@@ -92,6 +92,75 @@ export class CarsView {
     this.root = root;
     this.controller = controller;
   }
+
+  private saveState = () => {
+    localStorage.setItem("inputName", this.inputName.value);
+    localStorage.setItem("inputColor", this.inputColor.value);
+    localStorage.setItem("updateName", this.updateName.value);
+    localStorage.setItem("updateColor", this.updateColor.value);
+    if (this.selectCardId !== null) {
+      localStorage.setItem("selectCardId", this.selectCardId);
+    }
+    localStorage.setItem("pageCount", String(this.pageCount));
+    localStorage.setItem("winnersPageCount", String(this.winnersPageCount));
+    localStorage.setItem("isGaragePage", String(this.isGaragePage));
+    localStorage.setItem("winnersSortFlag", this.winnersSortFlag);
+    localStorage.setItem("winnersOrderFlag", this.winnersOrderFlag);
+  };
+
+  private updateState = async () => {
+    const inputName = localStorage.getItem("inputName");
+    if (inputName !== null) {
+      this.inputName.value = inputName;
+    }
+    const inputColor = localStorage.getItem("inputColor");
+    if (inputColor !== null) {
+      this.inputColor.value = inputColor;
+    }
+    const updateName = localStorage.getItem("updateName");
+    if (updateName !== null && updateName !== "") {
+      this.updateName.value = updateName;
+      this.updateCar.style.background = "aquamarine";
+    } else {
+      this.updateCar.style.background = "none";
+    }
+    const updateColor = localStorage.getItem("updateColor");
+    if (updateColor !== null) {
+      this.updateColor.value = updateColor;
+    }
+    const selectCardId = localStorage.getItem("selectCardId");
+    if (selectCardId !== null && selectCardId !== undefined) {
+      this.selectCardId = selectCardId;
+    }
+
+    const pageCount = localStorage.getItem("pageCount");
+    if (pageCount !== null) {
+      this.pageCount = Number(pageCount);
+    }
+
+    const winnersPageCount = localStorage.getItem("winnersPageCount");
+    if (winnersPageCount !== null) {
+      this.winnersPageCount = Number(winnersPageCount);
+    }
+
+    const isGaragePage = localStorage.getItem("isGaragePage");
+    if (isGaragePage !== null) {
+      if (isGaragePage === "true") {
+        this.isGaragePage = true;
+      } else if (isGaragePage === "false") {
+        this.isGaragePage = false;
+      }
+    }
+
+    const winnersSortFlag = localStorage.getItem("winnersSortFlag");
+    if (winnersSortFlag !== null) {
+      this.winnersSortFlag = winnersSortFlag;
+    }
+    const winnersOrderFlag = localStorage.getItem("winnersOrderFlag");
+    if (winnersOrderFlag !== null) {
+      this.winnersOrderFlag = winnersOrderFlag;
+    }
+  };
 
   private createCarClick = async () => {
     if (this.raceMode === false) {
@@ -433,7 +502,10 @@ export class CarsView {
       this.updateCar.removeEventListener("click", this.updateCarClick);
 
       this.generateCars.style.background = "none";
-      // this.generateCars.removeEventListener("click", this.generateCarsClick);
+      this.generateCars.removeEventListener(
+        "click",
+        this.generateRandomCarsClick
+      );
 
       // this.navigation.removeEventListener("click", this.switchPage);
       // this.navigation.style.background = "none";
@@ -457,7 +529,7 @@ export class CarsView {
       this.updateCar.addEventListener("click", this.updateCarClick);
 
       this.generateCars.style.background = "aquamarine";
-      // this.generateCars.addEventListener("click", this.generateCarsClick);
+      this.generateCars.addEventListener("click", this.generateRandomCarsClick);
 
       // this.navigation.addEventListener("click", this.switchPage);
       // this.navigation.style.background = "aquamarine";
@@ -485,12 +557,12 @@ export class CarsView {
     const fieldsetCreate = document.createElement("fieldset");
     fieldsetCreate.className = "form__fieldset fieldset";
 
-    this.inputName = document.createElement("input");
+    // this.inputName = document.createElement("input");
     this.inputName.className = "fieldset__input_text";
     this.inputName.type = "text";
     this.inputName.placeholder = "Enter car name";
 
-    this.inputColor = document.createElement("input");
+    // this.inputColor = document.createElement("input");
     this.inputColor.className = "fieldset__input_color";
     this.inputColor.type = "color";
 
@@ -504,20 +576,20 @@ export class CarsView {
     const fieldsetUpdate = document.createElement("fieldset");
     fieldsetUpdate.className = "form__fieldset fieldset";
 
-    this.updateName = document.createElement("input");
+    // this.updateName = document.createElement("input");
     this.updateName.className = "fieldset__input_text";
     this.updateName.type = "text";
     this.updateName.placeholder = "Choose a car";
 
-    this.updateColor = document.createElement("input");
+    // this.updateColor = document.createElement("input");
     this.updateColor.className = "fieldset__input_color";
     this.updateColor.type = "color";
 
-    this.updateCar = document.createElement("button");
+    // this.updateCar = document.createElement("button");
     this.updateCar.className = "fieldset__button";
     this.updateCar.innerHTML = "UPDATE";
     this.updateCar.type = "button";
-    this.updateCar.style.background = "none";
+    // this.updateCar.style.background = "none";
     this.updateCar.addEventListener("click", this.updateCarClick);
 
     this.race = document.createElement("button");
@@ -740,7 +812,12 @@ export class CarsView {
     this.navigation = document.createElement("button");
     this.navigation.className = "main__navigation navigation";
     this.navigation.style.background = "aquamarine";
-    this.navigation.innerHTML = "TO WINNERS";
+    if (this.isGaragePage) {
+      this.navigation.innerHTML = "TO WINNERS";
+    } else {
+      this.navigation.innerHTML = "TO GARAGE";
+    }
+
     this.navigation.addEventListener("click", this.switchPage);
   };
 
@@ -774,10 +851,10 @@ export class CarsView {
     this.winPrev.innerHTML = "PREV";
     if (this.winnersPageCount > 1) {
       this.winPrev.style.background = "aquamarine";
-      this.winPrev.addEventListener("click", this.prevClick);
+      this.winPrev.addEventListener("click", this.prevWinClick);
     } else {
       this.winPrev.style.background = "none";
-      this.winPrev.removeEventListener("click", this.prevClick);
+      this.winPrev.removeEventListener("click", this.prevWinClick);
     }
     this.winNext = document.createElement("button");
     this.winNext.addEventListener("click", this.nextWinClick);
@@ -788,10 +865,10 @@ export class CarsView {
     );
     if (winners.length > 0) {
       this.winNext.style.background = "aquamarine";
-      this.winNext.addEventListener("click", this.nextClick);
+      this.winNext.addEventListener("click", this.nextWinClick);
     } else {
       this.winNext.style.background = "none";
-      this.winNext.removeEventListener("click", this.nextClick);
+      this.winNext.removeEventListener("click", this.nextWinClick);
     }
     this.winnersPagination.append(this.winPrev, this.winNext);
   }
@@ -961,6 +1038,11 @@ export class CarsView {
   };
 
   public mount = async () => {
+    this.updateState();
+    window.addEventListener("beforeunload", (event) => {
+      console.log(event);
+      this.saveState();
+    });
     this.main = document.createElement("main");
     await this.createGarage();
     await this.createWinners();
