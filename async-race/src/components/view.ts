@@ -1,16 +1,11 @@
 import { Controller } from "./сontroller";
 import "../index.scss";
+import { IResult, IView } from "./view-types";
 
-interface IResult {
-  id: string;
-  carName: string | null | undefined;
-  duration: number;
-}
-
-export class View {
+export class View implements IView {
   controller: Controller;
 
-  root: HTMLElement;
+  private root: HTMLElement;
 
   private main!: HTMLElement;
 
@@ -93,7 +88,7 @@ export class View {
     this.controller = controller;
   }
 
-  private saveState = (): void => {
+  saveState = (): void => {
     localStorage.setItem("inputName", this.inputName.value);
     localStorage.setItem("inputColor", this.inputColor.value);
     localStorage.setItem("updateName", this.updateName.value);
@@ -108,7 +103,7 @@ export class View {
     localStorage.setItem("winnersOrderFlag", this.winnersOrderFlag);
   };
 
-  private updateState = (): void => {
+  updateState = (): void => {
     const inputName = localStorage.getItem("inputName");
     if (inputName !== null) {
       this.inputName.value = inputName;
@@ -171,7 +166,7 @@ export class View {
     }
   };
 
-  private createCarClick = async (): Promise<void> => {
+  createCarClick = async (): Promise<void> => {
     if (
       this.inputName instanceof HTMLInputElement &&
       this.inputColor instanceof HTMLInputElement
@@ -193,7 +188,7 @@ export class View {
     }
   };
 
-  private updateCarClick = async (): Promise<void> => {
+  updateCarClick = async (): Promise<void> => {
     if (
       this.updateName instanceof HTMLInputElement &&
       this.updateColor instanceof HTMLInputElement &&
@@ -212,7 +207,7 @@ export class View {
     }
   };
 
-  private selectCarClick = (event: Event): void => {
+  selectCarClick = (event: Event): void => {
     if (this.raceMode === false) {
       const target = event.target as HTMLButtonElement;
       this.selectCardId = target.getAttribute("data-id");
@@ -226,7 +221,7 @@ export class View {
     }
   };
 
-  private removeCarClick = async (event: Event): Promise<void> => {
+  removeCarClick = async (event: Event): Promise<void> => {
     const target = event.target as HTMLButtonElement;
     const id = target.getAttribute("data-id");
     if (id === this.selectCardId) {
@@ -242,12 +237,12 @@ export class View {
     await this.updatePaginationGarage();
   };
 
-  private startEngineClick = async (id: string): Promise<IResult | null> => {
+  startEngineClick = async (id: string): Promise<IResult | null> => {
     this.driveCount += 1;
     this.driveSwitch();
 
-    let target = null;
-    let sibling = null;
+    let target: HTMLButtonElement | null = null;
+    let sibling: HTMLButtonElement | null = null;
     let result: IResult | Promise<never> | null = null;
 
     if (id !== null) {
@@ -307,8 +302,8 @@ export class View {
     return null;
   };
 
-  private stopEngineClick = async (id: string): Promise<void> => {
-    let target = null;
+  stopEngineClick = async (id: string): Promise<void> => {
+    let target: HTMLButtonElement | null = null;
     let sibling: HTMLButtonElement | null = null;
 
     await this.controller.handleSwitchEngine(id, "stopped");
@@ -353,7 +348,7 @@ export class View {
     }
   };
 
-  private raceClick = async (): Promise<void> => {
+  raceClick = async (): Promise<void> => {
     this.raceMode = true;
     this.firstRace = true;
     this.race.style.background = "none";
@@ -388,7 +383,7 @@ export class View {
     }
   };
 
-  private writeWinner = async (winner: IResult): Promise<void> => {
+  writeWinner = async (winner: IResult): Promise<void> => {
     const winners = await this.controller.handleGetWinners();
     if (winners !== null) {
       const winnersId = winners.map((x) => x.id);
@@ -424,7 +419,7 @@ export class View {
     }
   };
 
-  private eraseWinner = async (id: string): Promise<void> => {
+  eraseWinner = async (id: string): Promise<void> => {
     const winners = await this.controller.handleGetWinners();
     if (winners !== null) {
       const winnersId = winners.map((x) => x.id);
@@ -435,7 +430,7 @@ export class View {
     }
   };
 
-  private resetClick = async (): Promise<void> => {
+  resetClick = async (): Promise<void> => {
     const cars = await this.controller.handleGetCarsOnPage(this.pageCount);
     if (cars !== null) {
       const carId = cars.map((car) => car.id);
@@ -452,7 +447,7 @@ export class View {
     }
   };
 
-  private prevClick = async (): Promise<void> => {
+  prevClick = async (): Promise<void> => {
     if (this.pageCount > 1) {
       this.pageCount -= 1;
     }
@@ -461,7 +456,7 @@ export class View {
     this.updatePaginationGarage();
   };
 
-  private nextClick = async (): Promise<void> => {
+  nextClick = async (): Promise<void> => {
     const cars = await this.controller.handleGetCarsOnPage(this.pageCount + 1);
     if (cars !== null) {
       if (cars.length > 0) {
@@ -473,7 +468,7 @@ export class View {
     }
   };
 
-  private driveSwitch = async (): Promise<void> => {
+  driveSwitch = async (): Promise<void> => {
     const selectButtonsCollection =
       document.getElementsByClassName("box__select");
     const selectButtons = [...selectButtonsCollection];
@@ -540,7 +535,7 @@ export class View {
     }
   };
 
-  private createForm(): void {
+  createForm(): void {
     this.form = document.createElement("form");
     this.form.className = "garage__form form";
 
@@ -607,12 +602,12 @@ export class View {
     this.form.append(formButtons);
   }
 
-  private generateRandomCarsClick = async (): Promise<void> => {
+  generateRandomCarsClick = async (): Promise<void> => {
     await this.controller.handleGenerateRandomCars();
     this.updateBoxes();
   };
 
-  private async createBoxes(): Promise<void> {
+  async createBoxes(): Promise<void> {
     const allCars = await this.controller.handleGetCars();
     let cars = await this.controller.handleGetCarsOnPage(this.pageCount);
     if (cars !== null) {
@@ -730,7 +725,7 @@ export class View {
     }
   }
 
-  private async createPuginationGarage(): Promise<void> {
+  async createPuginationGarage(): Promise<void> {
     this.garagePagination = document.createElement("div");
     this.garagePagination.className = "garage__pagination pagination";
     this.prev = document.createElement("button");
@@ -759,7 +754,7 @@ export class View {
     }
   }
 
-  private async updateBoxes(): Promise<void> {
+  async updateBoxes(): Promise<void> {
     try {
       this.garage.removeChild(this.boxes);
       await this.createBoxes();
@@ -769,13 +764,13 @@ export class View {
     }
   }
 
-  private updatePaginationGarage = async (): Promise<void> => {
+  updatePaginationGarage = async (): Promise<void> => {
     this.garage.removeChild(this.garagePagination);
     await this.createPuginationGarage();
     this.garage.appendChild(this.garagePagination);
   };
 
-  private createGarage = async (): Promise<void> => {
+  createGarage = async (): Promise<void> => {
     this.winner = document.createElement("div");
     this.winner.className = "garage__winner winner";
     this.createForm();
@@ -796,7 +791,7 @@ export class View {
     );
   };
 
-  private createNavigationButton = (): void => {
+  createNavigationButton = (): void => {
     this.navigation = document.createElement("button");
     this.navigation.className = "main__navigation navigation";
     this.navigation.style.background = "aquamarine";
@@ -809,7 +804,7 @@ export class View {
     this.navigation.addEventListener("click", this.switchPage);
   };
 
-  private switchPage = () => {
+  switchPage = () => {
     if (!this.isGaragePage) {
       this.isGaragePage = true;
       this.navigation.innerHTML = "TO WINNERS";
@@ -829,7 +824,7 @@ export class View {
     }
   };
 
-  private async createPuginationWinners(): Promise<void> {
+  async createPuginationWinners(): Promise<void> {
     this.winnersPagination = document.createElement("div");
     this.winnersPagination.className = "winners__pagination pagination";
     this.winPrev = document.createElement("button");
@@ -862,7 +857,7 @@ export class View {
     }
   }
 
-  private prevWinClick = async (): Promise<void> => {
+  prevWinClick = async (): Promise<void> => {
     if (this.winnersPageCount > 1) {
       this.winnersPageCount -= 1;
       await this.updateWinners();
@@ -870,7 +865,7 @@ export class View {
     }
   };
 
-  private nextWinClick = async (): Promise<void> => {
+  nextWinClick = async (): Promise<void> => {
     const winners = await this.controller.handleGetWinnersOnPage(
       this.winnersPageCount + 1
     );
@@ -883,7 +878,7 @@ export class View {
     }
   };
 
-  private createWinners = async (): Promise<void> => {
+  createWinners = async (): Promise<void> => {
     this.winners = document.createElement("div");
     if (this.isGaragePage === true) {
       this.winners.style.visibility = "hidden";
@@ -1025,13 +1020,13 @@ export class View {
     );
   };
 
-  private updateWinners = async (): Promise<void> => {
+  updateWinners = async (): Promise<void> => {
     this.main.removeChild(this.winners);
     await this.createWinners();
     this.main.appendChild(this.winners);
   };
 
-  private updatePuginationWinners = async (): Promise<void> => {
+  updatePuginationWinners = async (): Promise<void> => {
     this.winners.removeChild(this.winnersPagination);
     await this.createPuginationWinners();
     this.winners.appendChild(this.winnersPagination);

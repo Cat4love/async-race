@@ -1,24 +1,6 @@
-interface ICar {
-  name: string;
-  color: string;
-  id: string;
-}
-interface IWinner {
-  id: number;
-  wins: number;
-  time: number;
-}
+import { IModel, ICar, IWinner, IEngine, IDriveEngine } from "./model-types";
 
-interface IEngine {
-  velocity: string;
-  distance: string;
-}
-
-interface IDriveEngine {
-  success: boolean;
-}
-
-export class Model {
+export class Model implements IModel {
   getRandomDigit(min: number, max: number): number {
     const a = Math.ceil(min);
     const b = Math.floor(max);

@@ -28,8 +28,6 @@ main {
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  // align-items: center;
-  // justify-content: center;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -41,8 +39,6 @@ main {
   width: 100%;
   display: flex;
   flex-direction: column;
-  // justify-content: center;
-  // align-items: center;
   gap: 10px;
 }
 
@@ -156,15 +152,9 @@ main {
   align-items: center;
   justify-content: center;
   gap: 10px;
-
-  &__garage{}
-  &__winners{}
 }
 
 .winners {
-  // width: 500px;
-  // height: 500px;
-  // background-color: aquamarine;
   position: absolute;
   top: 40px;
   display: flex;
