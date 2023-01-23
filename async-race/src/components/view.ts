@@ -818,7 +818,7 @@ export class View {
       this.garage.style.zIndex = "1";
       this.winners.style.visibility = "hidden";
       this.winners.style.zIndex = "0";
-      window.location.href = "/#garage";
+      window.location.href = "#/garage";
     } else if (this.isGaragePage) {
       this.isGaragePage = false;
       this.navigation.innerHTML = "TO GARAGE";
@@ -826,7 +826,7 @@ export class View {
       this.garage.style.zIndex = "0";
       this.winners.style.visibility = "visible";
       this.winners.style.zIndex = "1";
-      window.location.href = "/#winners";
+      window.location.href = "#/winners";
     }
   };
 

@@ -5,7 +5,7 @@ const EslingPlugin = require('eslint-webpack-plugin');
 
 const mode = process.env.NODE_ENV || 'development';
 const devMode = mode === 'development';
-const devtool = devMode ? 'source-map' : undefined;
+const devtool = devMode ? undefined : undefined;
 
 module.exports = {
   mode,
@@ -24,7 +24,7 @@ module.exports = {
     assetModuleFilename: 'assets/[hash][ext]',
   },
   optimization: {
-    minimize: true,
+    minimize: false,
   },
   plugins: [
     new EslingPlugin({ extensions: 'ts' }),
