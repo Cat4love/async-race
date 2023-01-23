@@ -1,12 +1,12 @@
-import { CarsView } from "./components/CarsView";
-import { CarsController } from "./components/CarsController";
-import { CarsModel } from "./components/CarsModel";
+import { View } from "./components/view";
+import { Controller } from "./components/сontroller";
+import { Model } from "./components/model";
 
-const carsModel = new CarsModel();
-const carsController = new CarsController(carsModel);
-const carsView = new CarsView(
+const model = new Model();
+const controller = new Controller(model);
+const view = new View(
   document.querySelector("body") as HTMLElement,
-  carsController
+  controller
 );
 
-carsView.mount();
+view.mount();
