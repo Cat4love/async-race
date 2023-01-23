@@ -429,8 +429,8 @@ export class CarsView {
       this.generateCars.style.background = "none";
       // this.generateCars.removeEventListener("click", this.generateCarsClick);
 
-      this.navigation.removeEventListener("click", this.switchPage);
-      this.navigation.style.background = "none";
+      // this.navigation.removeEventListener("click", this.switchPage);
+      // this.navigation.style.background = "none";
 
       for (let i = 0; i < selectButtons.length; i += 1) {
         const select = selectButtons[i] as HTMLButtonElement;
@@ -453,8 +453,8 @@ export class CarsView {
       this.generateCars.style.background = "aquamarine";
       // this.generateCars.addEventListener("click", this.generateCarsClick);
 
-      this.navigation.addEventListener("click", this.switchPage);
-      this.navigation.style.background = "aquamarine";
+      // this.navigation.addEventListener("click", this.switchPage);
+      // this.navigation.style.background = "aquamarine";
 
       if (this.selectCardId !== null && this.selectCardId !== undefined) {
         console.log("ok");
@@ -709,8 +709,13 @@ export class CarsView {
     await this.createBoxes();
     this.createPuginationGarage();
     this.garage = document.createElement("div");
+    if (this.isGaragePage === true) {
+      this.garage.style.visibility = "visible";
+    } else {
+      this.garage.style.visibility = "hidden";
+    }
     this.garage.className = "main__garage garage";
-    this.garage.style.display = "flex";
+    // this.garage.style.display = "flex";
     this.garage.append(
       this.form,
       this.boxes,
@@ -728,17 +733,22 @@ export class CarsView {
   };
 
   private switchPage = () => {
-    if (this.garage.style.display !== "flex") {
+    console.log(this.isGaragePage);
+    if (!this.isGaragePage) {
       this.isGaragePage = true;
       this.navigation.innerHTML = "TO WINNERS";
-      this.garage.style.display = "flex";
-      this.winners.style.display = "none";
+      this.garage.style.visibility = "visible";
+      this.garage.style.zIndex = "1";
+      this.winners.style.visibility = "hidden";
+      this.winners.style.zIndex = "0";
       window.location.href = "#garage";
-    } else if (this.garage.style.display === "flex") {
+    } else if (this.isGaragePage) {
       this.isGaragePage = false;
       this.navigation.innerHTML = "TO GARAGE";
-      this.garage.style.display = "none";
-      this.winners.style.display = "flex";
+      this.garage.style.visibility = "hidden";
+      this.garage.style.zIndex = "0";
+      this.winners.style.visibility = "visible";
+      this.winners.style.zIndex = "1";
       window.location.href = "#winners";
     }
   };
@@ -796,9 +806,9 @@ export class CarsView {
   private createWinners = async () => {
     this.winners = document.createElement("div");
     if (this.isGaragePage === true) {
-      this.winners.style.display = "none";
+      this.winners.style.visibility = "hidden";
     } else {
-      this.winners.style.display = "flex";
+      this.winners.style.visibility = "visible";
     }
     this.winners.className = "main__winners winners";
     const allWinners = await this.controller.handleGetWinners();

@@ -7,7 +7,7 @@
     "start": "set NODE_ENV=development&&webpack serve",
     "dev": "set NODE_ENV=development&&webpack",
     "prod": "set NODE_ENV=production&&webpack",
-    "deploy": "npm run dev && npx gh-pages -d dist -e online-store-team"
+    "deploy": "npm run dev && npx gh-pages -d dist -e async-race"
   },
   "keywords": [],
   "author": "",
