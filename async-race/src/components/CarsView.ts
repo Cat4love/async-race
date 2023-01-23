@@ -99,6 +99,12 @@ export class CarsView {
         this.inputName instanceof HTMLInputElement &&
         this.inputColor instanceof HTMLInputElement
       ) {
+        if (this.inputName.value === "") {
+          this.inputName.value = this.controller.handleGetRandomCarName();
+        }
+        if (this.inputColor.value === "#000000") {
+          this.inputColor.value = this.controller.handleGetRandomColor();
+        }
         const create = await this.controller.handleCreateCar(
           this.inputName.value,
           this.inputColor.value
@@ -533,6 +539,7 @@ export class CarsView {
     this.generateCars.style.background = "aquamarine";
     this.generateCars.type = "button";
     this.generateCars.innerHTML = "GENERATE";
+    this.generateCars.addEventListener("click", this.generateRandomCarsClick);
 
     const formButtons = document.createElement("div");
     formButtons.className = "form__buttons";
@@ -543,6 +550,11 @@ export class CarsView {
     this.form.append(fieldsetCreate, fieldsetUpdate);
     this.form.append(formButtons);
   }
+
+  private generateRandomCarsClick = async () => {
+    await this.controller.handleGenerateRandomCars();
+    this.updateBoxes();
+  };
 
   private async createBoxes() {
     const allCars = await this.controller.handleGetCars();

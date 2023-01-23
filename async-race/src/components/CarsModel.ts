@@ -22,6 +22,60 @@ export class CarsModel {
   // constructor() {
   //   this.getCars();
   // }
+  getRandomDigit(min: number, max: number) {
+    const a = Math.ceil(min);
+    const b = Math.floor(max);
+    return Math.floor(Math.random() * (b - a + 1) + a);
+  }
+
+  getRandomCarName() {
+    const names = [
+      "Tesla",
+      "BMW",
+      "Mercedes-Benz",
+      "Ford",
+      "Toyota",
+      "Volkswagen",
+      "Reanult",
+      "Nissan",
+      "Mitsubishi",
+      "Kia",
+    ];
+
+    const models = [
+      "Model Y",
+      "E39",
+      "C-Class",
+      "Mustang",
+      "Corolla",
+      "Rio",
+      "Golf",
+      "Duster",
+      "Leaf",
+      "Outlander",
+    ];
+
+    return `${names[this.getRandomDigit(0, 9)]} ${
+      models[this.getRandomDigit(0, 9)]
+    }`;
+  }
+
+  getRandomColor() {
+    return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+  }
+
+  async generateRandomCars() {
+    const number = [...Array(10).keys()];
+    const promises = number.map(async () => {
+      const newCar = await this.createCar(
+        this.getRandomCarName(),
+        this.getRandomColor()
+      );
+      return newCar;
+    });
+    await Promise.all(promises);
+    return promises;
+  }
 
   async getCars(): Promise<ICar[]> {
     const response = await fetch(`http://localhost:3000/garage`);

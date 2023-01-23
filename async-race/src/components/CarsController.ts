@@ -98,4 +98,16 @@ export class CarsController {
   public async handleEraseWinner(id: string) {
     return this.model.eraseWinner(id);
   }
+
+  public async handleGenerateRandomCars() {
+    return this.model.generateRandomCars();
+  }
+
+  public handleGetRandomCarName() {
+    return this.model.getRandomCarName();
+  }
+
+  public handleGetRandomColor() {
+    return this.model.getRandomColor();
+  }
 }
