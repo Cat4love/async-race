@@ -44,7 +44,7 @@ export class Model implements IModel {
   }
 
   async generateRandomCars(): Promise<string> {
-    const number = [...Array(10).keys()];
+    const number = [...Array(100).keys()];
     const promises = number.map(async () => {
       const newCar = await this.createCar(
         this.getRandomCarName(),
