@@ -56,7 +56,7 @@ export class View {
 
   private reset!: HTMLButtonElement;
 
-  private winner!: HTMLParagraphElement;
+  private winner!: HTMLDivElement;
 
   private generateCars!: HTMLButtonElement;
 
@@ -372,14 +372,14 @@ export class View {
           this.winner.innerHTML = `"${winner?.carName} went first ${(
             Number(winner?.duration) / 1000
           ).toFixed(2)}s"`;
-          this.winner.style.color = "green";
-          this.winner.style.display = "block";
+          this.winner.style.background = "green";
+          this.winner.style.display = "flex";
           this.writeWinner(winner);
         }
       } catch (error) {
-        this.winner.style.color = "red";
-        this.winner.innerHTML = '"all cars are broken"';
-        this.winner.style.display = "block";
+        this.winner.style.background = "red";
+        this.winner.innerHTML = '"there are no cars or everything is broken"';
+        this.winner.style.display = "flex";
       }
 
       await Promise.allSettled(promises).then((results) => results);
@@ -776,8 +776,7 @@ export class View {
   };
 
   private createGarage = async (): Promise<void> => {
-    this.winner = document.createElement("p");
-    this.winner.innerHTML = "WINNER";
+    this.winner = document.createElement("div");
     this.winner.className = "garage__winner winner";
     this.createForm();
     await this.createBoxes();

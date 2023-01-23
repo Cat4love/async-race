@@ -121,14 +121,19 @@ main {
 }
 
 .winner {
-  width: 400px;
+  width: 500px;
   height: 100px;
+  color: black;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid black;
   font-size: 24px;
   margin: 0px;
   display: none;
   position: absolute;
   top: 50%;
-  left: calc(50% - 200px);
+  left: calc(50% - 250px);
+  z-index: 1;
 }
 
 .backgroud-default {
