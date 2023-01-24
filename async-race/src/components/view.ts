@@ -133,8 +133,10 @@ export class View implements IView {
       this.updateColor.value !== "#000000"
     ) {
       this.updateCar.style.background = "aquamarine";
+      this.updateCar.addEventListener("click", this.updateCarClick);
     } else {
       this.updateCar.style.background = "none";
+      this.updateCar.removeEventListener("click", this.updateCarClick);
     }
 
     const pageCount = localStorage.getItem("pageCount");
@@ -200,10 +202,12 @@ export class View implements IView {
         this.selectCardId
       );
       await this.updateBoxes();
+      await this.updateWinners();
       this.updateCar.style.background = "none";
       this.updateName.value = "";
       this.updateColor.value = "#000000";
       this.selectCardId = null;
+      localStorage.removeItem("selectCardId");
     }
   };
 
@@ -217,6 +221,7 @@ export class View implements IView {
         this.updateName.value = name;
         this.updateColor.value = color;
       }
+      this.updateCar.addEventListener("click", this.updateCarClick);
       this.updateCar.style.background = "aquamarine";
     }
   };
@@ -525,7 +530,7 @@ export class View implements IView {
         this.selectCardId !== null &&
         this.updateColor.value !== "#000000"
       ) {
-        this.updateCar.style.background = "aquqmarine";
+        this.updateCar.style.background = "aquamarine";
         this.updateCar.addEventListener("click", this.updateCarClick);
       }
 
@@ -578,7 +583,6 @@ export class View implements IView {
     this.updateCar.className = "fieldset__button";
     this.updateCar.innerHTML = "UPDATE";
     this.updateCar.type = "button";
-    this.updateCar.addEventListener("click", this.updateCarClick);
 
     this.race = document.createElement("button");
     this.race.className = "form__button";
