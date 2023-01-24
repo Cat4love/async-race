@@ -993,7 +993,9 @@ export class View implements IView {
             if (winner.id === Number(car.id)) {
               const bodyRow = document.createElement("tr");
               const bodyCell1 = document.createElement("th");
-              bodyCell1.innerHTML = `${i + 1}`;
+              bodyCell1.innerHTML = `${
+                i + 1 + 10 * (this.winnersPageCount - 1)
+              }`;
               const bodyCell2 = document.createElement("th");
               const carImage = document.createElement("div");
               carImage.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Pro 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) 
