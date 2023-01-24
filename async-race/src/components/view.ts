@@ -253,6 +253,16 @@ export class View implements IView {
           target.style.background = "none";
           if (target.nextSibling !== null) {
             sibling = target.nextSibling as HTMLButtonElement;
+            if (!this.raceMode && sibling !== null) {
+              sibling.style.background = "red";
+              sibling.addEventListener(
+                "click",
+                () => {
+                  this.stopEngineClick(id);
+                },
+                { once: true }
+              );
+            }
           }
         }
       }
@@ -280,16 +290,6 @@ export class View implements IView {
               }
             } else {
               result = { id, carName, duration };
-            }
-            if (!this.raceMode && sibling !== null) {
-              sibling.style.background = "red";
-              sibling.addEventListener(
-                "click",
-                () => {
-                  this.stopEngineClick(id);
-                },
-                { once: true }
-              );
             }
             return result;
           } catch (error) {
