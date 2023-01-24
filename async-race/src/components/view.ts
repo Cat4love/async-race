@@ -508,21 +508,30 @@ export class View implements IView {
         remove.style.background = "none";
       }
     } else {
-      this.race.style.background = "green";
-      this.race.addEventListener("click", this.raceClick);
+      const allCars = await this.controller.handleGetCars();
+      if (allCars !== null && allCars.length > 1) {
+        this.race.addEventListener("click", this.raceClick, { once: true });
+        this.race.style.background = "green";
+      } else {
+        this.race.removeEventListener("click", this.raceClick);
+        this.race.style.background = "none";
+      }
 
       this.createCar.style.background = "aquamarine";
       this.createCar.addEventListener("click", this.createCarClick);
 
-      this.updateCar.style.background = "aquamarine";
-      this.updateCar.addEventListener("click", this.updateCarClick);
+      if (
+        this.updateName.value !== "" &&
+        this.selectCardId !== null &&
+        this.updateColor.value !== "#000000"
+      ) {
+        this.updateCar.style.background = "aquqmarine";
+        this.updateCar.addEventListener("click", this.updateCarClick);
+      }
 
       this.generateCars.style.background = "aquamarine";
       this.generateCars.addEventListener("click", this.generateRandomCarsClick);
 
-      if (this.selectCardId !== null && this.selectCardId !== undefined) {
-        this.updateCar.style.background = "aquamarine";
-      }
       for (let i = 0; i < selectButtons.length; i += 1) {
         const select = selectButtons[i] as HTMLButtonElement;
         select.addEventListener("click", this.selectCarClick);
@@ -576,7 +585,6 @@ export class View implements IView {
     this.race.style.background = "green";
     this.race.type = "button";
     this.race.innerHTML = "RACE";
-    this.race.addEventListener("click", this.raceClick, { once: true });
 
     this.reset = document.createElement("button");
     this.reset.className = "form__button";
@@ -609,6 +617,14 @@ export class View implements IView {
 
   async createBoxes(): Promise<void> {
     const allCars = await this.controller.handleGetCars();
+    if (allCars !== null && allCars.length > 1) {
+      this.race.addEventListener("click", this.raceClick, { once: true });
+      this.race.style.background = "green";
+    } else {
+      this.race.removeEventListener("click", this.raceClick);
+      this.race.style.background = "none";
+    }
+
     let cars = await this.controller.handleGetCarsOnPage(this.pageCount);
     if (cars !== null) {
       if (cars.length === 0 && this.pageCount > 1) {
