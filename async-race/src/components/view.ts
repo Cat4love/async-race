@@ -612,7 +612,8 @@ export class View implements IView {
 
   generateRandomCarsClick = async (): Promise<void> => {
     await this.controller.handleGenerateRandomCars();
-    this.updateBoxes();
+    await this.updateBoxes();
+    this.updatePaginationGarage();
   };
 
   async createBoxes(): Promise<void> {
